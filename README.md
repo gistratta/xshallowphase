@@ -1,5 +1,5 @@
 # xshallowphase
-
+#
 This script
  1. Read data from X-ray afterglow luminosity light curve
  2. Define model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
