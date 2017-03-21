@@ -18,6 +18,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpmath import *
 import scipy.special
+from scipy.optimize import curve_fit
 
 
 """
@@ -27,8 +28,8 @@ import scipy.special
 #filename='grb120102flux.qdp'
 #data=pd.read_csv(filename,comment='!', sep='\t', na_values='NO',header=None,skiprows=13,skip_blank_lines=True)
 
-filename='050319_lumk.qdp'
-data=pd.read_csv(filename,comment='!', sep=' ', header=None,skiprows=4,skip_blank_lines=True)
+filename='/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/TimeLuminosityLC/050315TimeLuminosityLC.txt'
+data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
 
 # trasforma i dati in un ndarray
 data_array=data.values
@@ -36,11 +37,15 @@ data_array=data.values
 # elimina le righe con NAN alla prima colonna
 table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
-time=table[:,0]
-dtimep=table[:,1]
-dtimem=table[:,2]
-lum=table[:,3]*0.001
-dlum=table[:,4]*0.001
+logtime=table[:,0]
+dlogtime=table[:,1]
+loglum=table[:,2]-51.
+dloglum=table[:,3]
+
+time=10**logtime
+dtime=10**dlogtime
+lum=10**loglum
+dlum=lum*0.1
 
 """
  PLOT LIGHT CURVE
@@ -119,7 +124,7 @@ print('  ')
     DEFINE MODELS
 """
 
-t=np.linspace(10,500000,10000)
+t=np.linspace(100,100000,10000)
 
 Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)
 Lsdold2= Li/(1 + t/a1)**2
@@ -226,8 +231,14 @@ def model_a1(t,k,B,omi,E0):
 # FIT MODEL ON DATA
 #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
-from scipy.optimize import curve_fit
-popt, pcov = curve_fit(model_a05_old, time, lum, sigma=dlum)
+t100=time[np.where(time>1000.)]
+l100=lum[np.where(time>1000.)]
+dl100=dlum[np.where(time>1000.)]
+
+#popt, pcov = curve_fit(model_a05_old, time, lum, sigma=dlum)
+#popt, pcov = curve_fit(model_a05, time, lum, sigma=dlum)
+popt, pcov = curve_fit(model_a05, t100, l100, sigma=dl100)
+#popt, pcov = curve_fit(model_a1, time, lum, sigma=dlum)
 
 print "k =", popt[0], "+/-", pcov[0,0]**0.5
 print "B =", popt[1], "+/-", pcov[1,1]**0.5
@@ -242,7 +253,7 @@ print "E0 =", popt[3], "+/-", pcov[3,3]**0.5
 plt.loglog(time,lum,'.')
 plt.xlabel('time from trigger [s]')
 plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
-plt.loglog(t, model_a05_old(t,popt[0],popt[1],popt[2],popt[3]),'r-')
+plt.loglog(t100, model_a05_old(t100,popt[0],popt[1],popt[2],popt[3]),'r-')
 plt.show()
 
 
