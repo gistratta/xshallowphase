@@ -28,7 +28,7 @@ from scipy.optimize import curve_fit
 #filename='grb120102flux.qdp'
 #data=pd.read_csv(filename,comment='!', sep='\t', na_values='NO',header=None,skiprows=13,skip_blank_lines=True)
 
-filename='/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/TimeLuminosityLC/050315TimeLuminosityLC.txt'
+filename='/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/LUMFIT/TimeLuminosityLC/050315TimeLuminosityLC.txt'
 data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
 
 # trasforma i dati in un ndarray
@@ -225,39 +225,34 @@ def model_a1(t,k,B,omi,E0):
 #plt.show()
 
 
-def test():
-    """
-    Do some test
-    """
 
+# FIT MODEL ON DATA
+#http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
-    # FIT MODEL ON DATA
-    #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
-
-    t100=time[np.where(time>1000.)]
-    l100=lum[np.where(time>1000.)]
-    dl100=dlum[np.where(time>1000.)]
+t100=time[np.where(time>1000.)]
+l100=lum[np.where(time>1000.)]
+dl100=dlum[np.where(time>1000.)]
 
 #popt, pcov = curve_fit(model_a05_old, time, lum, sigma=dlum)
 #popt, pcov = curve_fit(model_a05, time, lum, sigma=dlum)
-    popt, pcov = curve_fit(model_a05, t100, l100, sigma=dl100)
+popt, pcov = curve_fit(model_a05, t100, l100, sigma=dl100)
 #popt, pcov = curve_fit(model_a1, time, lum, sigma=dlum)
 
-    print "k =", popt[0], "+/-", pcov[0,0]**0.5
-    print "B =", popt[1], "+/-", pcov[1,1]**0.5
-    print "omi =", popt[2], "+/-", pcov[2,2]**0.5
-    print "E0 =", popt[3], "+/-", pcov[3,3]**0.5
+print "k =", popt[0], "+/-", pcov[0,0]**0.5
+print "B =", popt[1], "+/-", pcov[1,1]**0.5
+print "omi =", popt[2], "+/-", pcov[2,2]**0.5
+print "E0 =", popt[3], "+/-", pcov[3,3]**0.5
 
 
 
 
 # PLOT DATA AND BEST FIT MODEL
 
-    plt.loglog(time,lum,'.')
-    plt.xlabel('time from trigger [s]')
-    plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
-    plt.loglog(t100, model_a05_old(t100,popt[0],popt[1],popt[2],popt[3]),'r-')
-    plt.show()
+plt.loglog(time,lum,'.')
+plt.xlabel('time from trigger [s]')
+plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
+plt.loglog(t100, model_a05_old(t100,popt[0],popt[1],popt[2],popt[3]),'r-')
+plt.show()
 
 
 
