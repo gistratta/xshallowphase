@@ -6,7 +6,9 @@ This script
  3. Fit model to the data and compute best fit param and cov. matrix
  4. Plot best fit model on data
 
- Per lanciare lo script: 
-    ipython --pylab
-    import script
-    
+Tu use the module:
+
+ipython --pylab
+And from the python shell:
+
+import script
