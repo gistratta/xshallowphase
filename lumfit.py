@@ -2,14 +2,15 @@
 """
     Author: Giulia Stratta
 This script
- 1. Read data from X-ray afterglow luminosity light curve
- 2. Define model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
- 3. Fit model to the data and compute best fit param and cov. matrix
- 4. Plot best fit model on data
+ 1. Reads data from X-ray afterglow luminosity light curve
+ 2. Defines model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
+ 3. Fits model to the data and compute best fit param and cov. matrix
+ 4. Plots best fit model on data
+ 5. Saves plot in ../output
 
  Per lanciare lo script: 
     ipython --pylab
-    import script
+    run lumfit
 """
 
 
@@ -21,6 +22,9 @@ import scipy.special
 from scipy.optimize import curve_fit
 
 
+plt.clf()
+plt.close()
+
 """
  1. READ LIGHT CURVES
 """
@@ -28,7 +32,9 @@ from scipy.optimize import curve_fit
 #filename='grb120102flux.qdp'
 #data=pd.read_csv(filename,comment='!', sep='\t', na_values='NO',header=None,skiprows=13,skip_blank_lines=True)
 
-filename='/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/LUMFIT/TimeLuminosityLC/050315TimeLuminosityLC.txt'
+path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/LUMFIT/TimeLuminosityLC/'
+fi = raw_input(' grb light curve file [e.g. 050315]: ')
+filename=path+fi+'TimeLuminosityLC.txt'
 data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
 
 # trasforma i dati in un ndarray
@@ -48,8 +54,15 @@ lum=10**loglum
 dlum=lum*0.1
 
 """
- PLOT LIGHT CURVE
+ PLOT LIGHT CURVE DATA POINT
 """
+
+plt.title(fi)
+
+plt.loglog(time,lum,'.')
+plt.xlabel('time from trigger [s]')
+plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
+plt.show()
 
 # Se uso il Notebook
 #%matplotlib inline
@@ -59,6 +72,8 @@ dlum=lum*0.1
 #plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
 #plt.ylabel('0.3-10 keV flux [erg cm^-2 s^-1]')
 #plt.show()
+
+
 
 
 """
@@ -94,7 +109,6 @@ c = 2.99792458                      # units of 10^5 km/s
 r0 = 1.2                            # units of 10 km
 Ine = 0.35*msun*1.4*(r0)**2         # units of 10^45 kg km^2
 
-
 spini = 1.                          # initial spin period in units of ms
 omi = 2*np.pi/spini                 # initial spin frequency in units of 10^3 Hz
 Ein=0.5*Ine*omi**2                  # initial spin energy in units of 10^51 erg
@@ -113,11 +127,6 @@ a1=tsdi
 a2=2./(2.-alpha)*2./3.*a1
 Lni=Ein/(2./3.*a1)
 tsd=a1*2./3.
-
-print('Initial Iput values')
-print('B = ',B,'omi = ',omi,' k = ',k,'E0 = ', E0, 'tsdi = ',tsdi)
-print('  ')
-
 
 
 """
@@ -171,6 +180,9 @@ ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha)/4*r0**6/(Ine*c**3*10**5)*B*
 #    glist.append(g0)
 #g=np.array(glist)
 
+
+
+
 def model_a05(t,k,B,omi,E0):
     """
     Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha=0.5, as function of
@@ -208,11 +220,10 @@ def model_a1(t,k,B,omi,E0):
         
         Usage: model_a1()
     """
-
-
     hg1_a1=scipy.special.hyp2f1((4. - alpha2)/(2. - alpha2), 1. + k, 2. + k, 1.97411*10**(-7)*(-2. + alpha2) * B**2 * omi**2)
     hg2_a1=scipy.special.hyp2f1((4.-alpha2)/(2.-alpha2), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha2)*B**2 * omi**2 * t)
     f_a1=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a1 + B**2*omi**4*t**(1 + k)*hg2_a1)
+    modelabel='model_a1'
     return f_a1
 
 
@@ -229,32 +240,52 @@ def model_a1(t,k,B,omi,E0):
 # FIT MODEL ON DATA
 #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
-t100=time[np.where(time>1000.)]
-l100=lum[np.where(time>1000.)]
-dl100=dlum[np.where(time>1000.)]
 
+startTxrt = float(raw_input(' XRT start time in sec : '))
+txrt=time[np.where(time>startTxrt)]
+lxrt=lum[np.where(time>startTxrt)]
+dlxrt=dlum[np.where(time>startTxrt)]
+
+
+def fitmodel(model, x, y, dy):
 #popt, pcov = curve_fit(model_a05_old, time, lum, sigma=dlum)
 #popt, pcov = curve_fit(model_a05, time, lum, sigma=dlum)
-popt, pcov = curve_fit(model_a05, t100, l100, sigma=dl100)
-#popt, pcov = curve_fit(model_a1, time, lum, sigma=dlum)
+    popt, pcov = curve_fit(model, x, y, sigma=dy)
+    print " "
+    print "k [",k,"] =", popt[0], "+/-", pcov[0,0]**0.5
+    print "B [",B,"]  =", popt[1], "+/-", pcov[1,1]**0.5
+    print "omi [2pi/spin_i=",omi,"] =", popt[2], "+/-", pcov[2,2]**0.5
+    print "E0 [",E0,"] =", popt[3], "+/-", pcov[3,3]**0.5
+    return plt.loglog(x, model(x,popt[0],popt[1],popt[2],popt[3]))
+#    plt.show()
+#    return popt,pcov
+#    return plt.show()
 
-print "k =", popt[0], "+/-", pcov[0,0]**0.5
-print "B =", popt[1], "+/-", pcov[1,1]**0.5
-print "omi =", popt[2], "+/-", pcov[2,2]**0.5
-print "E0 =", popt[3], "+/-", pcov[3,3]**0.5
+
+def fit(model):
+    return fitmodel(model,txrt,lxrt,dlxrt)
 
 
+#print('Initial Iput values')
+#print('B = ',B,'omi = ',omi,' k = ',k,'E0 = ', E0, 'tsdi = ',tsdi)
+#print('  ')
 
 
-# PLOT DATA AND BEST FIT MODEL
+print ' '
+print 'model_a05'
+fit(model_a05)
 
-plt.loglog(time,lum,'.')
-plt.xlabel('time from trigger [s]')
-plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
-plt.loglog(t100, model_a05_old(t100,popt[0],popt[1],popt[2],popt[3]),'r-')
+print ' '
+print 'model_a05_old'
+fit(model_a05_old)
+
+print ' '
+print 'model_a1'
+fit(model_a1)
+
+
 plt.show()
-
-
+plt.savefig('../output/'+fi+'.png')
 
 
 

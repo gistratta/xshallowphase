@@ -1,15 +1,11 @@
 # xshallowphase
 #
-This script
- 1. Read data from X-ray afterglow luminosity light curve
- 2. Define model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
- 3. Fit model to the data and compute best fit param and cov. matrix
- 4. Plot best fit model on data
+1. Reads data from X-ray afterglow luminosity light curve
+2. Defines model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
+3. Fits model to the data and compute best fit param and cov. matrix
+4. Plots best fit model on data
+5. Saves plot in ../output
 
-To use the module:
-
-> ipython --pylab
-
-And from the python shell:
-
-> import script
+Per lanciare lo script: 
+ipython --pylab
+run lumfit
