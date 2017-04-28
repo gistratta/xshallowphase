@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 from mpmath import *
 import scipy.special
 from scipy.optimize import curve_fit
+from scipy.stats import chisquare
 
 
 plt.clf()
@@ -61,7 +62,7 @@ plt.title(fi)
 
 plt.loglog(time,lum,'.')
 plt.xlabel('time from trigger [s]')
-plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
+plt.ylabel('Luminosity x 10^51 [erg s^-1]')
 plt.show()
 
 # Se uso il Notebook
@@ -104,24 +105,25 @@ mp.dps = 25
 # Setting the mp.pretty option will use the str()-style output for repr() as well
 mp.pretty = True
 
-msun = 1.989                        # units of 10^28 kg
-c = 2.99792458                      # units of 10^5 km/s
-r0 = 1.2                            # units of 10 km
-Ine = 0.35*msun*1.4*(r0)**2         # units of 10^45 kg km^2
+msun = 1.989                        # units of 10^33 gr
+c = 2.99792458                      # units of 10^10 cm/s
+r0 = 1.2                            # units of 10 km (10^6 cm)
+Ine = 0.35*msun*1.4*(r0)**2         # units of 10^45 gr cm^2
 
 spini = 1.                          # initial spin period in units of ms
 omi = 2*np.pi/spini                 # initial spin frequency in units of 10^3 Hz
 Ein=0.5*Ine*omi**2                  # initial spin energy in units of 10^51 erg
 
-B = 5.                              # Magnetic field in units of 10^14 Gauss
+B = 5.                              # Magnetic field in units of 10^14 Gauss= 1/(gr*cm*s)
 tsdi = 3*Ine*c**3/(B**2*(r0)**6*omi**2)*10**5   # Initial spin down time for the standard magnetic dipole formula in units of seconds
 Li=Ein/tsdi                         # Initial spindown lum. (?) 10^51 erg/s
-E0=1.                               # Initial kinetic energy of the ejecta
+E0=1.                               # Initial total energy (10^51 erg ??)
 
 k=0.4                               # k=4*epsilon_e kind of radiative efficiency
 alpha=0.5                           # effective spin down power law index (?)
-alpha1=0.5
+#alpha1=0.5
 alpha2=1.
+
 
 a1=tsdi
 a2=2./(2.-alpha)*2./3.*a1
@@ -129,57 +131,61 @@ Lni=Ein/(2./3.*a1)
 tsd=a1*2./3.
 
 
+
+
 """
     DEFINE MODELS
 """
 
-t=np.linspace(100,100000,10000)
+startTxrt = float(raw_input(' XRT start time in sec : '))
 
-Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)
-Lsdold2= Li/(1 + t/a1)**2
+t0=np.linspace(100.0,1.0e6,10000)
+t=t0[np.where(t0>startTxrt)]
 
-#for z in time:
-#    hg2=hyp2f1(2, 1 + k, 2 + k, -(z/a1))
-#    print(hg2)
+Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)  # pure dipole radiation spin down lum.
+Lsdold2= Li/(1 + t/a1)**2           # stessa formula di Lsdold1 ma scritta in modo piu semplice
 
 
-def model_a05_old(t,k,B,omi,E0):
+# Initial spin down time for the new formula by C&S06
+tsdnew= 2./3.*3.7991745075226948*10**6./(B**2. * omi**2.)
+ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha)/(2 - alpha))
+
+# new spin down lum. expression for alpha2
+#ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha2)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha2)/(2 - alpha2))
+
+
+txrt=time[np.where(time>startTxrt)]
+lxrt=lum[np.where(time>startTxrt)]
+dlxrt=dlum[np.where(time>startTxrt)]
+
+
+def model_old(t,k,B,omi,E0):
     """
     Description: Energy evolution inside the external shock as due to radiative losses+energy injection 
-    (Dall'Osso et al. 2011) assuming pure magnetic dipole, alpha1=0.5, as function of
+    (Dall'Osso et al. 2011) assuming pure magnetic dipole, as function of
         k = radiative efficiency (0.3)
         B = magnetic field (5. in units of 10^14 Gauss)
         omi = initial spin frequency (2pi)
         E0 = initial ejecta energy (1.)
     
-    Usage: model_a05_old()
+    Usage: model_old()
     """
     tsdi = 3*Ine*c**3/(B**2*(r0)**6*omi**2)*10**5
     Ein = 0.5*Ine*omi**2
     Li = Ein/tsdi
-    hg1_a05_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(1/a1))
-    hg2_a05_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(t/a1))
-    f_a05_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - Li*hg1_a05_old + Li*t**(1 + k)*hg2_a05_old)
-    return f_a05_old
-
-#flist=[]
-#for z in time:
-#    f0=float((k/z)*(1/(1 + k))*z**(-k)*(E0 + E0*k - Li*hg1 + Li*z**(1 + k)*hyp2f1(2, 1 + k, 2 + k, -(z/a1))))
-#    flist=flist.append(f0)
-
-#f=np.array(flist)
+    a1=tsdi
+    hg1_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(1/a1))
+    hg2_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(t/a1))
+    f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - Li*hg1_old + Li*t**(1 + k)*hg2_old)
+    return f_old
 
 
-
-tsdnew= 2./3.*3.7991745075226948*10**6./(B**2. * omi**2.)
-ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha)/(2 - alpha))
 
 #glist=[]
 #for z in time:
 #    g0=float((k/z)*(1./(1. + 1.*k))*(z**(-1.*k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - 1.*B**2*omi**4*hg1 + B**2*omi**4*z**(1. + 1.*k)*hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * z)))
 #    glist.append(g0)
 #g=np.array(glist)
-
 
 
 
@@ -193,7 +199,7 @@ def model_a05(t,k,B,omi,E0):
         
         Usage: model_a05()
      """
-    
+    alpha=0.5
     hg1_a05=scipy.special.hyp2f1((4. - 1. *alpha)/(2. - 1. *alpha), 1. + 1.*k, 2. + 1. *k, 1.97411*10**(-7)*(-2. + 1.* alpha) * B**2 * omi**2)
     hg2_a05=scipy.special.hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * t)
     f_a05=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a05 + B**2*omi**4*t**(1 + k)*hg2_a05)
@@ -202,13 +208,6 @@ def model_a05(t,k,B,omi,E0):
 
 
 
-ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha2)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha2)/(2 - alpha2))
-
-#glist=[]
-#for z in time:
-#    g0=float((k/z)*(1./(1. + 1.*k))*(z**(-1.*k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - 1.*B**2*omi**4*hg1 + B**2*omi**4*z**(1. + 1.*k)*hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * z)))
-#    glist.append(g0)
-#g=np.array(glist)
 
 def model_a1(t,k,B,omi,E0):
     """
@@ -220,15 +219,19 @@ def model_a1(t,k,B,omi,E0):
         
         Usage: model_a1()
     """
-    hg1_a1=scipy.special.hyp2f1((4. - alpha2)/(2. - alpha2), 1. + k, 2. + k, 1.97411*10**(-7)*(-2. + alpha2) * B**2 * omi**2)
-    hg2_a1=scipy.special.hyp2f1((4.-alpha2)/(2.-alpha2), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha2)*B**2 * omi**2 * t)
+    alpha=1.0
+    hg1_a1=scipy.special.hyp2f1((4. - alpha)/(2. - alpha), 1. + k, 2. + k, 1.97411*10**(-7)*(-2. + alpha) * B**2 * omi**2)
+    hg2_a1=scipy.special.hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * t)
     f_a1=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a1 + B**2*omi**4*t**(1 + k)*hg2_a1)
-    modelabel='model_a1'
     return f_a1
 
+# plotta modello con valori iniziali (prima del fit)
+#plt.loglog(t,model_old(t,k,B,omi,E0),'g--')
+#plt.loglog(t,model_a05(t,k,B,omi,E0),'r--')
+#plt.loglog(t,model_a1(t,k,B,omi,E0),'b--')
 
 
-#plt.loglog(t,f_a05_old)
+
 #plt.loglog(t,f_a05)
 #plt.loglog(t,f_a1)
 #plt.xlabel('time from trigger [s]')
@@ -241,26 +244,22 @@ def model_a1(t,k,B,omi,E0):
 #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
 
-startTxrt = float(raw_input(' XRT start time in sec : '))
-txrt=time[np.where(time>startTxrt)]
-lxrt=lum[np.where(time>startTxrt)]
-dlxrt=dlum[np.where(time>startTxrt)]
-
-
 def fitmodel(model, x, y, dy):
 #popt, pcov = curve_fit(model_a05_old, time, lum, sigma=dlum)
 #popt, pcov = curve_fit(model_a05, time, lum, sigma=dlum)
     popt, pcov = curve_fit(model, x, y, sigma=dy)
     print " "
     print "k [",k,"] =", popt[0], "+/-", pcov[0,0]**0.5
-    print "B [",B,"]  =", popt[1], "+/-", pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"] =", popt[2], "+/-", pcov[2,2]**0.5
-    print "E0 [",E0,"] =", popt[3], "+/-", pcov[3,3]**0.5
-    return plt.loglog(x, model(x,popt[0],popt[1],popt[2],popt[3]))
+    print "B [",B,"(10^14 G)]  =", popt[1], "+/-", pcov[1,1]**0.5
+    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", popt[2], "+/-", pcov[2,2]**0.5
+    print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
+    #ss_res = np.sum((lumxrt - model(txrt,popt[0],popt[1],popt[2],popt[3])) ** 2)
+    #ss_tot = np.sum((lumxrt - np.mean(lumxrt))**2
+    #r2 = 1. - (ss_res / ss_tot)
+    return plt.loglog(t, model(t,popt[0],popt[1],popt[2],popt[3]))
 #    plt.show()
 #    return popt,pcov
 #    return plt.show()
-
 
 def fit(model):
     return fitmodel(model,txrt,lxrt,dlxrt)
@@ -271,14 +270,29 @@ def fit(model):
 #print('  ')
 
 
+#green
+print ' '
+print 'model_old'
+fit(model_old)
+
+#----TO BE TESTED
+
+#scipy.stats.chisquare(f_obs, f_exp=None, ddof=0, axis=0)
+
+# residual sum of squares
+#ss_res = np.sum((lumxrt - model_old(txrt,)) ** 2)
+# total sum of squares
+#ss_tot = np.sum((y - np.mean(y)) ** 2)
+# r-squared
+#r2 = 1 - (ss_res / ss_tot)
+#-----
+
+#red
 print ' '
 print 'model_a05'
 fit(model_a05)
 
-print ' '
-print 'model_a05_old'
-fit(model_a05_old)
-
+#cyan
 print ' '
 print 'model_a1'
 fit(model_a1)
