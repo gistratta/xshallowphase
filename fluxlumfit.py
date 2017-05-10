@@ -1,8 +1,8 @@
 
 """
     Author: Giulia Stratta
-This script
- 1. Reads data from X-ray afterglow luminosity light curve
+This script [  --- up to 10/5/2017 IS ONLY FOR 061121 ----]
+ 1. Reads data from X-ray afterglow flux light curve
  2. Defines model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
  3. Fits model to the data and compute best fit param and cov. matrix
  4. Plots best fit model on data
@@ -33,9 +33,9 @@ plt.close()
 #filename='grb120102flux.qdp'
 #data=pd.read_csv(filename,comment='!', sep='\t', na_values='NO',header=None,skiprows=13,skip_blank_lines=True)
 
-path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/LUMFIT/TimeLuminosityLC/'
+path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/LUMFIT/SNR4/'
 fi = raw_input(' grb light curve file [e.g. 050315]: ')
-filename=path+fi+'TimeLuminosityLC.txt'
+filename=path+fi+'.txt'
 data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
 
 # trasforma i dati in un ndarray
@@ -44,28 +44,47 @@ data_array=data.values
 # elimina le righe con NAN alla prima colonna
 table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
-# fattore correttivo per portare la lum in banda 1-10000 keV
-E1=1.0
-E2=10000.0
+time0=table[:,0]
+dtimep=table[:,1]
+dtimem=table[:,2]
+flux=table[:,3]
+dfluxp=table[:,4]
+dfluxm=table[:,5]
+
+#---- Questi valori andrebbero letti nel file beta_parameters_and_Tt.dat
+# 061121
+z=1.314
+a=0.97
+#-----
+# ...e DL calcolato!
+# Questo usa i param. cosm. del paper:
+DLq48=(9076.8*3.08568)**2.0
+
+
 E01=0.3
 E02=10.0
+#E1=1.0
+#E2=10000.0
+E1=0.3
+E2=100.0
 
-# beta andrebbe letto dal file beta_parameters_and_Tt.dat per ciascun GRB
-beta=1.01
-K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
+#Kcorr=((E2**(1-a)-E1**(1-a))/(E02**(1-a)-E01**(1-a)))/(1+z)**(1-a)
+Kcorr=((E2**(1-a)-E1**(1-a))/(E02**(1-a)-E01**(1-a)))
+kzcorr=(1+z)**(1-a)
 
-logtime=table[:,0]
-dlogtime=table[:,1]
-loglum=table[:,2]-51.
-dloglum=table[:,3]
+"""
+# F[0.3,100]=F[0.3,10]*Kcorr
+# F[0.3/(1+z),100/(1+z)] = F[0.3,100]/(1+z)**(1-a)
+# L[0.3,100]=4*pi*DL^2*(F[0.3,10]*Kcorr/(1+z)^(1-a))
+"""
 
-time=10**logtime
-dtime=10**dlogtime
-#dlum=(lum*0.1)*K
-lump=10**(loglum+dloglum)
-lumm=10**(loglum-dloglum)
-lum=K*(lump+lumm)/2
-dlum=K*(lump-lumm)/2
+Kdist51=4*np.pi*DLq48*1.e-3
+
+time=time0/(1+z)
+dtime=((dtimep-dtimem)/2.0)/(1+z)
+dflux=(dfluxp-dfluxm)/2.0
+lum=flux*Kdist51*Kcorr/kzcorr
+dlum=dflux*Kdist51*Kcorr/kzcorr
 
 """
  PLOT LIGHT CURVE DATA POINT
@@ -150,7 +169,7 @@ tsd=a1*2./3.
     DEFINE MODELS
 """
 
-startTxrt = float(raw_input(' XRT start time in sec (leggere dal file!) : '))
+startTxrt = float(raw_input(' XRT start time in sec : '))
 
 #t0=np.linspace(100.0,1.0e6,10000)
 t0=np.logspace(1.,7., num=100, base=10.0)
@@ -258,10 +277,9 @@ def model_a1(t,k,B,omi,E0):
 #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
 # initial model
-#plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
+#plt.loglog(txrt, model_old(txrt,k,B,omi,E0),'k--',label='2011 model')
+plt.loglog(t, model_old(t,0.66,12.1,2.0*np.pi/1.18,1.0),'k--',label='2011 model')
 
-# old model (2011 paper)
-#plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
 
 
 def fitmodel(model, x, y, dy):
@@ -322,7 +340,11 @@ fit(model_a1)
 
 plt.legend()
 plt.show()
-plt.savefig('../output/'+fi+'.png')
+
+
+#savefig = raw_input(' Save figure? [Yes=1/No=0]: ')
+#if savefig == 1 :
+#plt.savefig('../output/'+fi+'.png')
 
 
 

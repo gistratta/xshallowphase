@@ -44,16 +44,6 @@ data_array=data.values
 # elimina le righe con NAN alla prima colonna
 table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
-# fattore correttivo per portare la lum in banda 1-10000 keV
-E1=1.0
-E2=10000.0
-E01=0.3
-E02=10.0
-
-# beta andrebbe letto dal file beta_parameters_and_Tt.dat per ciascun GRB
-beta=1.01
-K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
-
 logtime=table[:,0]
 dlogtime=table[:,1]
 loglum=table[:,2]-51.
@@ -61,22 +51,26 @@ dloglum=table[:,3]
 
 time=10**logtime
 dtime=10**dlogtime
-#dlum=(lum*0.1)*K
-lump=10**(loglum+dloglum)
-lumm=10**(loglum-dloglum)
-lum=K*(lump+lumm)/2
-dlum=K*(lump-lumm)/2
+lum=10**loglum
+dlum=lum*0.1
 
 """
  PLOT LIGHT CURVE DATA POINT
 """
 
-plt.title(fi)
+def plotdata(x,y,a):
 
-plt.loglog(time,lum,'.',label='data')
-plt.xlabel('time from trigger [s]')
-plt.ylabel('Luminosity x 10^51 [erg s^-1]')
-plt.show()
+    plt.title(a)
+
+    plt.loglog(x,y,'.',label='data')
+    plt.xlabel('time from trigger [s]')
+    plt.ylabel('Luminosity x 10^51 [erg s^-1]')
+    return plt.show()
+
+
+plotdata(time,lum,fi)
+
+
 
 # Se uso il Notebook
 #%matplotlib inline
@@ -150,7 +144,7 @@ tsd=a1*2./3.
     DEFINE MODELS
 """
 
-startTxrt = float(raw_input(' XRT start time in sec (leggere dal file!) : '))
+startTxrt = float(raw_input(' XRT start time in sec : '))
 
 #t0=np.linspace(100.0,1.0e6,10000)
 t0=np.logspace(1.,7., num=100, base=10.0)
@@ -194,13 +188,11 @@ def model_old(t,k,B,omi,E0):
     return f_old
 
 
-
 #glist=[]
 #for z in time:
 #    g0=float((k/z)*(1./(1. + 1.*k))*(z**(-1.*k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - 1.*B**2*omi**4*hg1 + B**2*omi**4*z**(1. + 1.*k)*hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * z)))
 #    glist.append(g0)
 #g=np.array(glist)
-
 
 
 def model_a05(t,k,B,omi,E0):
@@ -220,9 +212,6 @@ def model_a05(t,k,B,omi,E0):
     return f_a05
 
 
-
-
-
 def model_a1(t,k,B,omi,E0):
     """
         Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha2=1.0, as function of
@@ -240,11 +229,13 @@ def model_a1(t,k,B,omi,E0):
     return f_a1
 
 # plotta modello con valori iniziali (prima del fit)
-#plt.loglog(t,model_old(t,k,B,omi,E0),'g--')
+#plt.loglog(t,model_old(t,0.8,5.5,5.98,10.),'g--',label='2011 model')
+#plt.loglog(t,model_old(t,0.58,3.2,2*np.pi/2.12,1.3),'g--',label='2011 model')
+#plt.loglog(t,model_old(t,0.66,12.2,2*np.pi/1.18,10.4),'g--',label='2011 model')
+plt.loglog(t,model_old(t,0.33,11.7,2*np.pi/3.7,1.2),'g--',label='2011 model')
+
 #plt.loglog(t,model_a05(t,k,B,omi,E0),'r--')
 #plt.loglog(t,model_a1(t,k,B,omi,E0),'b--')
-
-
 
 #plt.loglog(t,f_a05)
 #plt.loglog(t,f_a1)
@@ -257,18 +248,10 @@ def model_a1(t,k,B,omi,E0):
 # FIT MODEL ON DATA
 #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
 
-# initial model
-#plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
-
-# old model (2011 paper)
-#plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
-
 
 def fitmodel(model, x, y, dy):
-    #t,k,B,omi,E0
-    p0=np.array([k,B,omi,E0])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [4., 10., 100.,600.]))
-    #    popt, pcov = curve_fit(model, x, y, sigma=dy)
+    p0=np.array([0.4,5.,6.,1.])
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [4., 100., 100.,1.e3]))
     print " "
     print "k [",k,"] =", popt[0], "+/-", pcov[0,0]**0.5
     print "B [",B,"(10^14 G)]  =", popt[1], "+/-", pcov[1,1]**0.5
@@ -277,7 +260,7 @@ def fitmodel(model, x, y, dy):
     #ss_res = np.sum((lumxrt - model(txrt,popt[0],popt[1],popt[2],popt[3])) ** 2)
     #ss_tot = np.sum((lumxrt - np.mean(lumxrt))**2
     #r2 = 1. - (ss_res / ss_tot)
-    return plt.loglog(t, model(t,popt[0],popt[1],popt[2],popt[3]),label='fit model')
+    return plt.loglog(t, model(t,popt[0],popt[1],popt[2],popt[3]),label='model')
 #    plt.show()
 #    return popt,pcov
 #    return plt.show()
@@ -296,7 +279,7 @@ def fit(model):
 #green
 print ' '
 print 'model_old'
-fit(model_old)
+#fit(model_old)
 
 #----TO BE TESTED
 
@@ -313,12 +296,14 @@ fit(model_old)
 #red
 print ' '
 print 'model_a05'
-fit(model_a05)
+#fit(model_a05)
+
 
 #cyan
 print ' '
 print 'model_a1'
-fit(model_a1)
+#fit(model_a1)
+
 
 plt.legend()
 plt.show()
