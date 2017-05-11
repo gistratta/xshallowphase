@@ -50,6 +50,36 @@ E2=10000.0
 E01=0.3
 E02=10.0
 
+
+
+filein=path+'beta_parameters_and_Tt.dat'
+f=open(filein,'r')
+
+lines=[]
+linesout=[]
+for line in f:
+    lines.append(line)
+
+f.close()
+
+linesout=[]
+for line in lines:
+    line.strip()
+    line.split()
+    linesout.append(line)
+
+"""
+QUI DEVO FAR LEGGERE IL beta e Tt (che è log(Tstart)) del mio grb...
+
+finew=fi[1:]
+
+linesout2=[]
+for line in linesout:
+    ismydata=line.find(finew) == 1
+    if ismydata:
+        linesout2.append(line)
+
+"""
 # beta andrebbe letto dal file beta_parameters_and_Tt.dat per ciascun GRB
 beta=1.01
 K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
