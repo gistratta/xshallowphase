@@ -21,7 +21,7 @@ from mpmath import *
 import scipy.special
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
-
+import scipy.stats as stats
 
 plt.clf()
 plt.close()
@@ -46,42 +46,25 @@ table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
 # fattore correttivo per portare la lum in banda 1-10000 keV
 E1=1.0
-E2=10000.0
+E2=1000.0
+#E1=0.3
+#E2=100.0
 E01=0.3
 E02=10.0
 
-
-
+# Read beta and Tstart from file
 filein=path+'beta_parameters_and_Tt.dat'
-f=open(filein,'r')
+dataparam=pd.read_csv(filein,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
+dataparam_array=dataparam.values
+print "Index for ",fi," : ", np.where(dataparam_array==fi)
+datafi=dataparam_array[np.where(dataparam_array[:,0]==fi)]
+datafiflat=datafi.flatten()
+z=float(datafiflat[1])
+beta=float(datafiflat[2])
+dbeta=float(datafiflat[3])
+Tt=float(datafiflat[5])
 
-lines=[]
-linesout=[]
-for line in f:
-    lines.append(line)
-
-f.close()
-
-linesout=[]
-for line in lines:
-    line.strip()
-    line.split()
-    linesout.append(line)
-
-"""
-QUI DEVO FAR LEGGERE IL beta e Tt (che è log(Tstart)) del mio grb...
-
-finew=fi[1:]
-
-linesout2=[]
-for line in linesout:
-    ismydata=line.find(finew) == 1
-    if ismydata:
-        linesout2.append(line)
-
-"""
-# beta andrebbe letto dal file beta_parameters_and_Tt.dat per ciascun GRB
-beta=1.01
+# luminosity correction from E01,E02 to E1,E2
 K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
 
 logtime=table[:,0]
@@ -89,21 +72,30 @@ dlogtime=table[:,1]
 loglum=table[:,2]-51.
 dloglum=table[:,3]
 
-time=10**logtime
-dtime=10**dlogtime
+time0=10**logtime
+dtime0=10**dlogtime
 #dlum=(lum*0.1)*K
 lump=10**(loglum+dloglum)
 lumm=10**(loglum-dloglum)
-lum=K*(lump+lumm)/2
-dlum=K*(lump-lumm)/2
+lum0=K*(lump+lumm)/2
+dlum0=K*(lump-lumm)/2
+
+# sort times and riassess lum vector
+index=np.argsort(time0)
+time=time0[index]
+dtime=dtime0[index]
+lum=lum0[index]
+dlum=dlum0[index]
 
 """
  PLOT LIGHT CURVE DATA POINT
 """
+En1=str(E1)
+En2=str(E2)
+plt.title('GRB'+fi+' ['+En1+'-'+En2+' keV]')
 
-plt.title(fi)
-
-plt.loglog(time,lum,'.',label='data')
+plt.loglog(time,lum,'.', label='data',color='b')
+plt.errorbar(time, lum, yerr=dlum,fmt='none',ecolor='b')
 plt.xlabel('time from trigger [s]')
 plt.ylabel('Luminosity x 10^51 [erg s^-1]')
 plt.show()
@@ -116,8 +108,6 @@ plt.show()
 #plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
 #plt.ylabel('0.3-10 keV flux [erg cm^-2 s^-1]')
 #plt.show()
-
-
 
 
 """
@@ -180,11 +170,14 @@ tsd=a1*2./3.
     DEFINE MODELS
 """
 
-startTxrt = float(raw_input(' XRT start time in sec (leggere dal file!) : '))
+startTxrtFromFile=(10**Tt)/(1+z)
+print("XRT start time in sec from file:", startTxrtFromFile)
+startTxrt = float(raw_input(' XRT start time in sec: '))
 
 #t0=np.linspace(100.0,1.0e6,10000)
 t0=np.logspace(1.,7., num=100, base=10.0)
-t=t0[np.where(t0>startTxrt)]
+t1=t0[np.where(t0>startTxrt)]
+t=t1[np.where(t1<time[-1])]
 
 Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)  # pure dipole radiation spin down lum.
 Lsdold2= Li/(1 + t/a1)**2           # stessa formula di Lsdold1 ma scritta in modo piu semplice
@@ -224,15 +217,6 @@ def model_old(t,k,B,omi,E0):
     return f_old
 
 
-
-#glist=[]
-#for z in time:
-#    g0=float((k/z)*(1./(1. + 1.*k))*(z**(-1.*k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - 1.*B**2*omi**4*hg1 + B**2*omi**4*z**(1. + 1.*k)*hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * z)))
-#    glist.append(g0)
-#g=np.array(glist)
-
-
-
 def model_a05(t,k,B,omi,E0):
     """
     Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha=0.5, as function of
@@ -240,17 +224,12 @@ def model_a05(t,k,B,omi,E0):
         B = magnetic field (5. in units of 10^14 Gauss)
         omi = initial spin frequency (2pi)
         E0 = initial ejecta energy (1.)
-        
-        Usage: model_a05()
-     """
+    """
     alpha=0.5
     hg1_a05=scipy.special.hyp2f1((4. - 1. *alpha)/(2. - 1. *alpha), 1. + 1.*k, 2. + 1. *k, 1.97411*10**(-7)*(-2. + 1.* alpha) * B**2 * omi**2)
     hg2_a05=scipy.special.hyp2f1((4.-alpha)/(2.-alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha)*B**2 * omi**2 * t)
     f_a05=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a05 + B**2*omi**4*t**(1 + k)*hg2_a05)
     return f_a05
-
-
-
 
 
 def model_a1(t,k,B,omi,E0):
@@ -297,23 +276,30 @@ def model_a1(t,k,B,omi,E0):
 def fitmodel(model, x, y, dy):
     #t,k,B,omi,E0
     p0=np.array([k,B,omi,E0])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [4., 10., 100.,600.]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [4., 13., 100.,600.]))
     #    popt, pcov = curve_fit(model, x, y, sigma=dy)
     print " "
     print "k [",k,"] =", popt[0], "+/-", pcov[0,0]**0.5
     print "B [",B,"(10^14 G)]  =", popt[1], "+/-", pcov[1,1]**0.5
     print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", popt[2], "+/-", pcov[2,2]**0.5
     print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
-    #ss_res = np.sum((lumxrt - model(txrt,popt[0],popt[1],popt[2],popt[3])) ** 2)
-    #ss_tot = np.sum((lumxrt - np.mean(lumxrt))**2
-    #r2 = 1. - (ss_res / ss_tot)
-    return plt.loglog(t, model(t,popt[0],popt[1],popt[2],popt[3]),label='fit model')
+    
+    ym=model(x,popt[0],popt[1],popt[2],popt[3])
+    print stats.chisquare(f_obs=y,f_exp=ym)
+    mychi=sum(((y-ym)**2)/dy**2)
+    #mychi=sum(((y-ym)**2)/ym)
+    dof=len(x)-len(popt)
+    print "my chisquare=",mychi
+    print "dof=", dof
+    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+    print "P value",p_value
+    return plt.loglog(t, model(t,popt[0],popt[1],popt[2],popt[3]),label='model')
 #    plt.show()
 #    return popt,pcov
 #    return plt.show()
 
 
-
+# fitta model sui dati txrt lxrt
 def fit(model):
     return fitmodel(model,txrt,lxrt,dlxrt)
 
