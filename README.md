@@ -8,4 +8,4 @@
 
 Per lanciare lo script: 
 ipython --pylab
-run lumfit
+run loglumfit
