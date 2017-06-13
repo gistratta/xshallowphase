@@ -245,9 +245,9 @@ def model_a05(logt,k,B,omi,E0):
     t=10**logt
     
     #hg1_a05=scipy.special.hyp2f1((4 - alpha05)/(2-alpha05), 1 + k, 2+k, 2*(2/3)*(3*Ine*c**3*10.0**5/r0**6)*(alpha05-2)*B**2*omi**2)
-    hg1_a05=scipy.special.hyp2f1((4 - alpha05)/(2-alpha05), 1 + k, 2+k, 1.97411*10**(-7)*(alpha05-2)*B**2*omi**2)
-    hg2_a05=scipy.special.hyp2f1((4-alpha05)/(2-alpha05), 1+k, 2+k, 1.97411*10**(-7)*(alpha05-2)*B**2*omi**2*t)
-    f_a05=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a05 + B**2*omi**4*t**(1 + k)*hg2_a05)
+    hg1_a05=scipy.special.hyp2f1((4. - alpha05)/(2. -alpha05), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha05-2.)*B**2*omi**2)
+    hg2_a05=scipy.special.hyp2f1((4. -alpha05)/(2. -alpha05), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha05-2.)*B**2*omi**2*t)
+    f_a05=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a05 + B**2*omi**4*t**(1 + k)*hg2_a05)
 
     return np.log10(f_a05)
 
@@ -293,6 +293,7 @@ plt.show()
 # old model (2011 paper)
 #plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
 
+
 def fitmodel(model, x, y, dy):
 
     p0=np.array([k,B,omi,E0])
@@ -305,6 +306,12 @@ def fitmodel(model, x, y, dy):
     print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", popt[2], "+/-", pcov[2,2]**0.5
     print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
     print "------  "
+    
+    out_file = open("test.txt","a")
+    #    out_file.write("This Text is going to out file\nLook at it and see\n")
+    #    out_file.write("GRB,k,dk,B[10^14G],dB,omi[10^3 Hz],domi,E0[10^51erg],dE0"+"\n"+fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
+    out_file.write(fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
+    out_file.close()
     
     ym=model(x,popt[0],popt[1],popt[2],popt[3])
     print stats.chisquare(f_obs=y,f_exp=ym)
@@ -332,17 +339,17 @@ def fit(model):
     return fitmodel(model,txrt,lxrt,dlxrt)
 
 
-#green
+#blue
 print ' '
 print 'model_old'
 fit(model_old)
 
-#red
+#orange
 print ' '
 print 'model_a05'
 fit(model_a05)
 
-#cyan
+#green
 print ' '
 print 'model_a1'
 fit(model_a1)
@@ -364,9 +371,9 @@ fit(model_a1)
 
 # --- Salva il plot nella directory output
 
-#plt.legend()
-#plt.show()
-#plt.savefig('../output/'+fi+'.png')
+plt.legend()
+plt.show()
+plt.savefig('../output/'+fi+'.png')
 
 
 
