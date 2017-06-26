@@ -45,10 +45,10 @@ table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
 
 # --- Calcola il fattore correttivo per portare la lum in banda 1-10000 keV
+#E1=1.0
+#E2=10000
 E1=1.0
-E2=10000
-#E1=0.3
-#E2=100.0
+E2=100.0
 E01=0.3
 E02=10.0
 
@@ -150,7 +150,8 @@ E0=1.                               # Initial total energy (10^51 erg ??)
 k=0.4                               # k=4*epsilon_e kind of radiative efficiency
 # ---
 
-alpha=1.0                         # effective spin down power law index (?)
+alpha05=1.0                         # effective spin down power law index (?)
+alpha1=1.0
 
 
 # --- useful formulas to remind
@@ -233,8 +234,7 @@ def model_old(logt,k,B,omi,E0):
     return np.log10(f_old)
 
 
-
-def model_a(logt,k,B,omi,E0,alpha):
+def model_a05(logt,k,B,omi,E0):
     """
     Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha05=0.5, as function of
         k = radiative efficiency (0.3)
@@ -244,17 +244,37 @@ def model_a(logt,k,B,omi,E0,alpha):
     """
     t=10**logt
     
-    hg1_a=scipy.special.hyp2f1((4. - alpha)/(2. -alpha), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2)
-    hg2_a=scipy.special.hyp2f1((4. -alpha)/(2. -alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2*t)
-    f_a=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
+    #hg1_a05=scipy.special.hyp2f1((4 - alpha05)/(2-alpha05), 1 + k, 2+k, 2*(2/3)*(3*Ine*c**3*10.0**5/r0**6)*(alpha05-2)*B**2*omi**2)
+    hg1_a05=scipy.special.hyp2f1((4. - alpha05)/(2. -alpha05), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha05-2.)*B**2*omi**2)
+    hg2_a05=scipy.special.hyp2f1((4. -alpha05)/(2. -alpha05), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha05-2.)*B**2*omi**2*t)
+    f_a05=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a05 + B**2*omi**4*t**(1 + k)*hg2_a05)
 
-    return np.log10(f_a)
+    return np.log10(f_a05)
+
+
+def model_a1(logt,k,B,omi,E0):
+    """
+        Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha1=1.0, as function of
+        k = radiative efficiency (0.3)
+        B = magnetic field (5. in units of 10^14 Gauss)
+        omi = initial spin frequency (2pi)
+        E0 = initial ejecta energy (1.)
+        
+        Usage: model_a1()
+    """
+    t=10**logt
+    
+    hg1_a1=scipy.special.hyp2f1((4. - alpha1)/(2. - alpha1), 1. + k, 2. + k, 1.97411*10**(-7)*(-2. + alpha1) * B**2 * omi**2)
+    hg2_a1=scipy.special.hyp2f1((4.-alpha1)/(2.-alpha1), 1.+k, 2.+k, 1.97411*10**(-7)*(-2.+alpha1)*B**2 * omi**2 * t)
+    f_a1=(k/t)*(1/(1 + k))*((r0**6)/(4*c**3*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a1 + B**2*omi**4*t**(1 + k)*hg2_a1)
+    return np.log10(f_a1)
 
 
 # --- TEST: Plotta modello con valori iniziali (prima del fit) come dashed lines:
 
 plt.plot(np.log10(t),model_old(np.log10(t),k,B,omi,E0),'g--')
-plt.plot(np.log10(t),model_a(np.log10(t),k,B,omi,E0,alpha),'r--')
+#plt.plot(np.log10(t),model_a05(np.log10(t),k,B,omi,E0),'r--')
+#plt.plot(np.log10(t),model_a1(np.log10(t),k,B,omi,E0),'b--')
 
 #plt.loglog(t,f_a05)
 #plt.loglog(t,f_a1)
@@ -274,12 +294,7 @@ plt.show()
 #plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
 
 
-# NOTA: Fissare Tstart significa fissare anche E0
-# E0 puo essere indeterminato se Ein e molto maggiore
-# E0/T0 = lumin. senza magnetar
-# se Lin>>E0/T0 allora E0 non riesce ad essere determinare
-
-def fitmodelold(model, x, y, dy):
+def fitmodel(model, x, y, dy):
 
     p0=np.array([k,B,omi,E0])
     popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.1,1.0,4.2,0.01], [1.5, 15.,8.2,10.0]))
@@ -292,8 +307,7 @@ def fitmodelold(model, x, y, dy):
     print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
     print "------  "
     
-    #out_file = open("test.txt","a")
-    out_file = open("../output/LGRB/LGRBold.txt","a")
+    out_file = open("test.txt","a")
     #    out_file.write("This Text is going to out file\nLook at it and see\n")
     #    out_file.write("GRB,k,dk,B[10^14G],dB,omi[10^3 Hz],domi,E0[10^51erg],dE0"+"\n"+fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
     out_file.write(fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
@@ -313,43 +327,7 @@ def fitmodelold(model, x, y, dy):
     return plt.plot(np.log10(t), bfmodel,label='model')
 
 
-def fitmodelnew(model, x, y, dy):
-    
-    p0=np.array([k,B,omi,E0,alpha])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.1,1.0,4.2,0.01,0.0], [1.5, 15.,8.2,10.0,1.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", popt[0], "+/-", pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", popt[1], "+/-", pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", popt[2], "+/-", pcov[2,2]**0.5
-    print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
-    print "alpha [",alpha,"] =", popt[4], "+/-", pcov[4,4]**0.5
-    print "------  "
-    
-    #out_file = open("test.txt","a")
-    out_file = open("../output/LGRB/LGRBnew.txt","a")
-    #    out_file.write("This Text is going to out file\nLook at it and see\n")
-    #    out_file.write("GRB,k,dk,B[10^14G],dB,omi[10^3 Hz],domi,E0[10^51erg],dE0"+"\n"+fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
-    out_file.write(fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+","+str(popt[4])+","+str(pcov[4,4]**0.5)+"\n")
-    out_file.close()
-    
-    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-    
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
-    return plt.plot(np.log10(t), bfmodel,label='model')
-
-
-
-# fitta un modello tra i 2 definiti sui dati logaritmici txrt lxrt
+# fitta un modello tra i 3 definiti sui dati logaritmici txrt lxrt
 
 logstartTxrt=np.log10(startTxrt)
 txrt=ltime[np.where(ltime>logstartTxrt)]
@@ -357,23 +335,24 @@ lxrt=llum[np.where(ltime>logstartTxrt)]
 dlxrt=dllum[np.where(ltime>logstartTxrt)]
 
 
-#def fitold(model):
-#    return fitmodelold(model,txrt,lxrt,dlxrt)
-
-#def fitnew(model):
-#    return fitmodelnew(model,txrt,lxrt,dlxrt)
+def fit(model):
+    return fitmodel(model,txrt,lxrt,dlxrt)
 
 
 #blue
 print ' '
 print 'model_old'
-fitmodelold(model_old,txrt,lxrt,dlxrt)
+fit(model_old)
 
 #orange
 print ' '
-print 'model_a'
-#fitnew(model_a)
-fitmodelnew(model_a,txrt,lxrt,dlxrt)
+print 'model_a05'
+#fit(model_a05)
+
+#green
+print ' '
+print 'model_a1'
+#fit(model_a1)
 
 
 #----TO BE TESTED
@@ -394,7 +373,7 @@ fitmodelnew(model_a,txrt,lxrt,dlxrt)
 
 plt.legend()
 plt.show()
-plt.savefig('../output/LGRB/'+fi+'.png')
+plt.savefig('../output/'+fi+'.png')
 
 
 
