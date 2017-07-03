@@ -176,7 +176,10 @@ alpha=1.0                         # effective spin down power law index (?)
 """
 
 # Read and printout the start time of the plateau from the param_ file as logT in obs. frame
-startTxrtFromFile=(10**Tt)/(1+z)
+if Tt > 0.0 :
+    startTxrtFromFile=(10**Tt)/(1+z)
+if Tt == 0.0 :
+    startTxrtFromFile=0.0
 print("XRT start time in sec from file:", startTxrtFromFile)
 
 # If the read start time is ok, just retype it, otherwise type the right start time
@@ -282,7 +285,7 @@ plt.show()
 def fitmodelold(model, x, y, dy):
 
     p0=np.array([k,B,omi,E0])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.1,1.0,4.2,0.01], [1.5, 15.,8.2,10.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.1,0.01,4.2,0.01], [1.5, 50.,8.2,10.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -292,10 +295,7 @@ def fitmodelold(model, x, y, dy):
     print "E0 [",E0,"(10^51 erg)] =", popt[3], "+/-", pcov[3,3]**0.5
     print "------  "
     
-    #out_file = open("test.txt","a")
-    out_file = open("../output/LGRB/LGRBold.txt","a")
-    #    out_file.write("This Text is going to out file\nLook at it and see\n")
-    #    out_file.write("GRB,k,dk,B[10^14G],dB,omi[10^3 Hz],domi,E0[10^51erg],dE0"+"\n"+fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
+    out_file = open("../output/SGRB_Tt/SGRBoldmodel.txt","a")
     out_file.write(fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
     out_file.close()
     
@@ -310,7 +310,7 @@ def fitmodelold(model, x, y, dy):
     print "P value",p_value
     
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
-    return plt.plot(np.log10(t), bfmodel,label='model')
+    return plt.plot(np.log10(t), bfmodel,label='old model')
 
 
 def fitmodelnew(model, x, y, dy):
@@ -327,10 +327,7 @@ def fitmodelnew(model, x, y, dy):
     print "alpha [",alpha,"] =", popt[4], "+/-", pcov[4,4]**0.5
     print "------  "
     
-    #out_file = open("test.txt","a")
-    out_file = open("../output/LGRB/LGRBnew.txt","a")
-    #    out_file.write("This Text is going to out file\nLook at it and see\n")
-    #    out_file.write("GRB,k,dk,B[10^14G],dB,omi[10^3 Hz],domi,E0[10^51erg],dE0"+"\n"+fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+"\n")
+    out_file = open("../output/SGRB_Tt/SGRBnewmodel.txt","a")
     out_file.write(fi+","+str(popt[0])+","+str(pcov[0,0]**0.5)+","+str(popt[1])+","+str(pcov[1,1]**0.5)+","+str(popt[2])+","+str(pcov[2,2]**0.5)+","+str(popt[3])+","+str(pcov[3,3]**0.5)+","+str(popt[4])+","+str(pcov[4,4]**0.5)+"\n")
     out_file.close()
     
@@ -345,7 +342,7 @@ def fitmodelnew(model, x, y, dy):
     print "P value",p_value
     
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
-    return plt.plot(np.log10(t), bfmodel,label='model')
+    return plt.plot(np.log10(t), bfmodel,label='new model')
 
 
 
@@ -394,7 +391,7 @@ fitmodelnew(model_a,txrt,lxrt,dlxrt)
 
 plt.legend()
 plt.show()
-plt.savefig('../output/LGRB/'+fi+'.png')
+plt.savefig('../output/SGRB_Tt/'+fi+'.png')
 
 
 
