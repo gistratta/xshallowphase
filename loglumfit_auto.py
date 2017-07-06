@@ -27,13 +27,11 @@ import scipy.stats as stats
 import os
 
 
-# pulisce i plot e resetta eventuali residui del run precedente
-plt.clf()
-plt.close()
-
 """
 1. SET OUTPUT FILES
 """
+
+
 
 # Definisce i file di output
 outfileold="../output/SGRB_Tt/SGRBoldmodel.txt"
@@ -101,6 +99,7 @@ alphax=0.1
 #Li=Ein/tsdi                                     # Initial spindown lum. (?) 0.007 10^51 erg/s
 #a1 = 3*Ine*c**3/(B**2*(r0)**6*omi**2)*10**5     # tsdi
 # ----
+
 
 # --- in the Notebook but not used in the code
 #Lni=Ein/(2./3.*a1)
@@ -240,7 +239,7 @@ def fitmodelold(model, x, y, dy):
 
 #    p0=np.array([k,B,omi,E0])
     p0=np.array([k,B,omi])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [4.0, 100.,50.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -250,8 +249,7 @@ def fitmodelold(model, x, y, dy):
 #    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
     print "E0 [",E0,"(=0.7*omi^210^51 erg)] =", 0.7*popt[2]**2.
     print "------  "
-
-    E0=0.7*popt[2]**2.
+    E051=0.7*popt[2]**2.
 
 #    ym=model(x,popt[0],popt[1],popt[2],popt[3])
     ym=model(x,popt[0],popt[1],popt[2])
@@ -267,9 +265,9 @@ def fitmodelold(model, x, y, dy):
 #    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
 
-    #out_file = open(outfileold,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
+    out_file = open(outfileold,"a")
+    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    out_file.close()
 
 
     return plt.plot(np.log10(t), bfmodel,'r',label='D11 (fit)')
@@ -281,7 +279,7 @@ def fitmodelnew(model, x, y, dy):
 #    p0=np.array([k,B,omi,E0,alpha])
     p0=np.array([k,B,omi,alpha])
 #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [1.5, 100.,50.0,1.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [4.0, 100.,50.0,1.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -292,9 +290,7 @@ def fitmodelnew(model, x, y, dy):
     print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
     print "alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
     print "------  "
-
-    E0=0.7*popt[2]**2.0
-
+    E051=0.7*popt[2]**2.
 #    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
     ym=model(x,popt[0],popt[1],popt[2],popt[3])
     print stats.chisquare(f_obs=y,f_exp=ym)
@@ -309,9 +305,9 @@ def fitmodelnew(model, x, y, dy):
 #    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
 
-    #out_file = open(outfilenew,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
+    out_file = open(outfilenew,"a")
+    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    out_file.close()
 
     return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
 
@@ -322,7 +318,7 @@ def fitmodelnewx(model, x, y, dy):
 #    p0=np.array([k,B,omi,E0,alpha])
     p0=np.array([k,B,omi])
 #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [4.0, 100.,50.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -332,7 +328,7 @@ def fitmodelnewx(model, x, y, dy):
     print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
     print "alpha (fixed) =", alphax
     print "------  "
-    E0=0.7*popt[2]**2.0
+    E051=0.7*popt[2]**2.
 
     ym=model(x,popt[0],popt[1],popt[2])
     print stats.chisquare(f_obs=y,f_exp=ym)
@@ -346,9 +342,9 @@ def fitmodelnewx(model, x, y, dy):
 
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
 
-    #out_file = open(outfilenewx,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
+    out_file = open(outfilenewx,"a")
+    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    out_file.close()
 
     return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
 
@@ -359,127 +355,133 @@ def fitmodelnewx(model, x, y, dy):
 
 path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/'
 
-fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
 
-#f=open('/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/ShortGRB.dat')
-#datagrb=f.read()
-#f.close()
-#listgrb=datagrb.split()
+#fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
 
-#for fi in listgrb:
+f=open('/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/ShortGRB.dat')
+datagrb=f.read()
+f.close()
 
-filename=path+fi+'TimeLuminosityLC.txt'
-data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
+listgrb=datagrb.split()
 
-# trasforma i dati in un ndarray
-data_array=data.values
+for fi in listgrb:
 
-# elimina le righe con NAN alla prima colonna
-table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
+    filename=path+fi+'TimeLuminosityLC.txt'
+    data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
 
-# --- Calcola il fattore correttivo per portare la lum in banda 1-10000 keV
+    # trasforma i dati in un ndarray
+    data_array=data.values
 
-# Read beta and Tstart from file
-filein=path+'beta_parameters_and_Tt.dat'
-dataparam=pd.read_csv(filein,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
-dataparam_array=dataparam.values
-print "Index for ",fi," : ", np.where(dataparam_array==fi)
-datafi=dataparam_array[np.where(dataparam_array[:,0]==fi)]
-datafiflat=datafi.flatten()
-z=float(datafiflat[1])
-beta=float(datafiflat[2])
-dbeta=float(datafiflat[3])
-Tt=float(datafiflat[5])
+    # elimina le righe con NAN alla prima colonna
+    table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
-# luminosity correction from E01,E02 to E1,E2
-K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
+    # --- Calcola il fattore correttivo per portare la lum in banda 1-10000 keV
 
-logtime=table[:,0]
-dlogtime=table[:,1]
-loglum=table[:,2]-51+np.log10(K)
-dloglum=table[:,3]
+    # Read beta and Tstart from file
+    filein=path+'beta_parameters_and_Tt.dat'
+    dataparam=pd.read_csv(filein,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
+    dataparam_array=dataparam.values
+    print "Index for ",fi," : ", np.where(dataparam_array==fi)
+    datafi=dataparam_array[np.where(dataparam_array[:,0]==fi)]
+    datafiflat=datafi.flatten()
+    z=float(datafiflat[1])
+    beta=float(datafiflat[2])
+    dbeta=float(datafiflat[3])
+    Tt=float(datafiflat[5])
 
-# sort times and riassess lum vector
-index=np.argsort(logtime)
-ltime=logtime[index]
-llum=loglum[index]
-dllum=dloglum[index]
-# -----
+    # luminosity correction from E01,E02 to E1,E2
+    K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
 
-"""
-5. PLOT DATA POINT
-"""
-En1=str(E1)
-En2=str(E2)
-plt.title('GRB'+fi+' ['+En1+'-'+En2+' keV]')
+    logtime=table[:,0]
+    dlogtime=table[:,1]
+    loglum=table[:,2]-51+np.log10(K)
+    dloglum=table[:,3]
 
-#plt.plot(logtime,loglum, color='r')
-#plt.errorbar(logtime,loglum,yerr=dloglum,color='r')
-plt.plot(ltime,llum,'.', label='data',color='b')
-plt.errorbar(ltime, llum, yerr=dllum,fmt='none',ecolor='b')
-plt.xlabel('time from trigger [s]')
-plt.ylabel('log Luminosity x 10^51 [erg s^-1]')
-plt.show()
+    # sort times and riassess lum vector
+    index=np.argsort(logtime)
+    ltime=logtime[index]
+    llum=loglum[index]
+    dllum=dloglum[index]
+    # -----
 
-# Se uso il Notebook
-#%matplotlib inline
+    """
+    5. PLOT DATA POINT
+    """
+    En1=str(E1)
+    En2=str(E2)
+    plt.title('GRB'+fi+' ['+En1+'-'+En2+' keV]')
 
-#plt.loglog(time,lum,'.')
-#plt.xlabel('time from trigger [s]')
-#plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
-#plt.ylabel('0.3-10 keV flux [erg cm^-2 s^-1]')
-#plt.show()
+    #plt.plot(logtime,loglum, color='r')
+    #plt.errorbar(logtime,loglum,yerr=dloglum,color='r')
+    plt.plot(ltime,llum,'.', label='data',color='b')
+    plt.errorbar(ltime, llum, yerr=dllum,fmt='none',ecolor='b')
+    plt.xlabel('time from trigger [s]')
+    plt.ylabel('log Luminosity x 10^51 [erg s^-1]')
+    plt.show()
 
-# Read and printout the start time of the plateau from the param_ file as logT in obs. frame
-if Tt > 0.0 :
-    startTxrtFromFile=(10**Tt)/(1+z)
-if Tt == 0.0 :
-    startTxrtFromFile=0.0
-print("Start time in sec from file:", startTxrtFromFile)
+    # Se uso il Notebook
+    #%matplotlib inline
 
-# If the read start time is ok, just retype it, otherwise type the right start time
+    #plt.loglog(time,lum,'.')
+    #plt.xlabel('time from trigger [s]')
+    #plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
+    #plt.ylabel('0.3-10 keV flux [erg cm^-2 s^-1]')
+    #plt.show()
 
-startTxrt = float(raw_input(' Start time in sec: '))
-#startTxrt = float(startTxrtFromFile)
+    # Read and printout the start time of the plateau from the param_ file as logT in obs. frame
+    if Tt > 0.0 :
+        startTxrtFromFile=(10**Tt)/(1+z)
+    if Tt == 0.0 :
+        startTxrtFromFile=0.0
+    print("Start time in sec from file:", startTxrtFromFile)
 
-# Create a time vector with which plot the model
-#t0=np.linspace(100.0,1.0e6,10000)
-t0=np.logspace(-1.,7., num=100, base=10.0)
-t1=t0[np.where(t0>startTxrt)]
-t=t1[np.where(t1<10**(ltime[-1]))]
+    # If the read start time is ok, just retype it, otherwise type the right start time
 
-"""
-6. PLOT INITIAL MODELS
-"""
+    #startTxrt = float(raw_input(' Start time in sec: '))
+    startTxrt = float(startTxrtFromFile)
 
-plt.plot(np.log10(t),model_old(np.log10(t),k,B,omi),'r--',label='D11 (initial)')
-plt.plot(np.log10(t),model_a(np.log10(t),k,B,omi,alpha),'b--',label='CS06 alpha=1 (initial)')
-plt.plot(np.log10(t),model_ax(np.log10(t),k,B,omi),'c--',label='CS06 alpha='+str(alphax)+' (initial)')
-plt.show()
-#plt.loglog(t,f_a05)
-#plt.loglog(t,f_a1)
-#plt.xlabel('time from trigger [s]')
-#plt.ylabel('Luminosity / 10^51 [erg/s]')
+    # Create a time vector with which plot the model
+    #t0=np.linspace(100.0,1.0e6,10000)
+    t0=np.logspace(1.,7., num=100, base=10.0)
+    t1=t0[np.where(t0>startTxrt)]
+    t=t1[np.where(t1<10**(ltime[-1]))]
 
-logstartTxrt=np.log10(startTxrt)
-txrt=ltime[np.where(ltime>logstartTxrt)]
-lxrt=llum[np.where(ltime>logstartTxrt)]
-dlxrt=dllum[np.where(ltime>logstartTxrt)]
+    """
+    6. PLOT INITIAL MODELS
+    """
 
-print ' '
-print 'model_old'
-fitmodelold(model_old,txrt,lxrt,dlxrt)
+    plt.plot(np.log10(t),model_old(np.log10(t),k,B,omi),'r--',label='D11 (initial)')
+    plt.plot(np.log10(t),model_a(np.log10(t),k,B,omi,alpha),'b--',label='CS06 alpha=1 (initial)')
+    plt.plot(np.log10(t),model_ax(np.log10(t),k,B,omi),'c--',label='CS06 alpha='+str(alphax)+' (initial)')
+    plt.show()
+    #plt.loglog(t,f_a05)
+    #plt.loglog(t,f_a1)
+    #plt.xlabel('time from trigger [s]')
+    #plt.ylabel('Luminosity / 10^51 [erg/s]')
 
-print ' '
-print 'model_a'
-fitmodelnew(model_a,txrt,lxrt,dlxrt)
+    logstartTxrt=np.log10(startTxrt)
+    txrt=ltime[np.where(ltime>logstartTxrt)]
+    lxrt=llum[np.where(ltime>logstartTxrt)]
+    dlxrt=dllum[np.where(ltime>logstartTxrt)]
 
-print ' '
-print 'model_a with alpha fixed'
-fitmodelnewx(model_ax,txrt,lxrt,dlxrt)
+    print ' '
+    print 'model_old'
+    fitmodelold(model_old,txrt,lxrt,dlxrt)
+
+    print ' '
+    print 'model_a'
+    fitmodelnew(model_a,txrt,lxrt,dlxrt)
+
+    print ' '
+    print 'model_a with alpha fixed'
+    fitmodelnewx(model_ax,txrt,lxrt,dlxrt)
 
 # --- Salva il plot nella directory output
 
-plt.legend()
-plt.show()
-#plt.savefig('../output/SGRB_Tt/'+fi+'.png')
+    plt.legend()
+    plt.show()
+    plt.savefig('../output/SGRB_Tt/'+fi+'.png')
+
+    # pulisce i plot e resetta
+    plt.clf()
+    plt.close()
