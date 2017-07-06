@@ -36,24 +36,24 @@ plt.close()
 """
 
 # Definisce i file di output
-outfileold="../output/SGRB_Tt/SGRBoldmodel.txt"
-outfilenew="../output/SGRB_Tt/SGRBnewmodel.txt"
-outfilenewx="../output/SGRB_Tt/SGRBnewmodel_alphafix.txt"
+outfileold="./output/SGRB_Tt/SGRBoldmodel.txt"
+outfilenew="./output/SGRB_Tt/SGRBnewmodel.txt"
+outfilenewx="./output/SGRB_Tt/SGRBnewmodel_alphafix.txt"
 
 if not os.path.isfile(outfileold):
-	os.system('touch ../output/SGRB_Tt/SGRBoldmodel.txt')
+	os.system('touch ./output/SGRB_Tt/SGRBoldmodel.txt')
 	out_file = open(outfileold,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenew):
-	os.system('touch ../output/SGRB_Tt/SGRBnewmodel.txt')
+	os.system('touch ./output/SGRB_Tt/SGRBnewmodel.txt')
 	out_file = open(outfilenew,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,alpha,dalpha,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenewx):
-	os.system('touch ../output/SGRB_Tt/SGRBnewmodel_alphafix.txt')
+	os.system('touch ./output/SGRB_Tt/SGRBnewmodel_alphafix.txt')
 	out_file = open(outfilenewx,"a")
 	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
@@ -482,4 +482,4 @@ fitmodelnewx(model_ax,txrt,lxrt,dlxrt)
 
 plt.legend()
 plt.show()
-#plt.savefig('../output/SGRB_Tt/'+fi+'.png')
+#plt.savefig('./output/SGRB_Tt/'+fi+'.png')
