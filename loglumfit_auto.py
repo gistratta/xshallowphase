@@ -28,33 +28,43 @@ import os
 
 
 """
-1. SET OUTPUT FILES
+1. SET INPUT and OUTPUT FILES
 """
 
-
+path1="./output/LGRB_Tt/"
 
 # Definisce i file di output
-outfileold="./output/SGRB_Tt/SGRBoldmodel.txt"
-outfilenew="./output/SGRB_Tt/SGRBnewmodel.txt"
-outfilenewx="./output/SGRB_Tt/SGRBnewmodel_alphafix.txt"
+outfileold=path1+"oldmodel.txt"
+outfilenew=path1+"newmodel.txt"
+outfilenewx=path1+"newmodel_alphafix.txt"
 
 if not os.path.isfile(outfileold):
-	os.system('touch ./output/SGRB_Tt/SGRBoldmodel.txt')
+	os.system('touch '+path1+'oldmodel.txt')
 	out_file = open(outfileold,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenew):
-	os.system('touch ./output/SGRB_Tt/SGRBnewmodel.txt')
+	os.system('touch '+path1+'newmodel.txt')
 	out_file = open(outfilenew,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,alpha,dalpha,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenewx):
-	os.system('touch ./output/SGRB_Tt/SGRBnewmodel_alphafix.txt')
+	os.system('touch '+path1+'newmodel_alphafix.txt')
 	out_file = open(outfilenewx,"a")
 	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
+
+
+path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/'
+
+#fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
+
+f=open(path+'LongGRB.dat')
+datagrb=f.read()
+f.close()
+
 
 
 """
@@ -239,7 +249,7 @@ def fitmodelold(model, x, y, dy):
 
 #    p0=np.array([k,B,omi,E0])
     p0=np.array([k,B,omi])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [4.0, 100.,50.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -279,7 +289,7 @@ def fitmodelnew(model, x, y, dy):
 #    p0=np.array([k,B,omi,E0,alpha])
     p0=np.array([k,B,omi,alpha])
 #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [4.0, 100.,50.0,1.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [1.5, 100.,50.0,1.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -318,7 +328,7 @@ def fitmodelnewx(model, x, y, dy):
 #    p0=np.array([k,B,omi,E0,alpha])
     p0=np.array([k,B,omi])
 #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [4.0, 100.,50.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
     #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
     #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
     print "------ "
@@ -353,14 +363,6 @@ def fitmodelnewx(model, x, y, dy):
  4. READ DATA
 """
 
-path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/'
-
-
-#fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
-
-f=open('/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/ShortGRB.dat')
-datagrb=f.read()
-f.close()
 
 listgrb=datagrb.split()
 
@@ -390,7 +392,7 @@ for fi in listgrb:
     Tt=float(datafiflat[5])
 
     # luminosity correction from E01,E02 to E1,E2
-    K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
+    K = (E2**(1.-beta+1.e-8) - E1**(1.-beta+1.e-8))/(E02**(1.-beta+1.e-8) - E01**(1.-beta+1.e-8))
 
     logtime=table[:,0]
     dlogtime=table[:,1]
@@ -480,7 +482,7 @@ for fi in listgrb:
 
     plt.legend()
     plt.show()
-    plt.savefig('./output/SGRB_Tt/'+fi+'.png')
+    plt.savefig(path1+fi+'.png')
 
     # pulisce i plot e resetta
     plt.clf()

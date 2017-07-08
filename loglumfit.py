@@ -6,7 +6,7 @@ This script
  2. Defines model: ejecta energy variation with time assuming energy injection (from Simone Notebook)
  3. Fits model to the data and compute best fit param and cov. matrix
  4. Plots best fit model on data
- 5. Saves plot in ../output
+ 5. Saves plot in ./output
 
  Per lanciare lo script:
     ipython --pylab
@@ -34,26 +34,27 @@ plt.close()
 """
 1. SET OUTPUT FILES
 """
+path1="./output/LGRB_Tt/"
 
 # Definisce i file di output
-outfileold="./output/SGRB_Tt/SGRBoldmodel.txt"
-outfilenew="./output/SGRB_Tt/SGRBnewmodel.txt"
-outfilenewx="./output/SGRB_Tt/SGRBnewmodel_alphafix.txt"
+outfileold=path1+"oldmodel.txt"
+outfilenew=path1+"newmodel.txt"
+outfilenewx=path1+"newmodel_alphafix.txt"
 
 if not os.path.isfile(outfileold):
-	os.system('touch ./output/SGRB_Tt/SGRBoldmodel.txt')
+	os.system('touch '+path1+'oldmodel.txt')
 	out_file = open(outfileold,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenew):
-	os.system('touch ./output/SGRB_Tt/SGRBnewmodel.txt')
+	os.system('touch '+path1+'newmodel.txt')
 	out_file = open(outfilenew,"a")
 	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,alpha,dalpha,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenewx):
-	os.system('touch ./output/SGRB_Tt/SGRBnewmodel_alphafix.txt')
+	os.system('touch '+path1+'newmodel_alphafix.txt')
 	out_file = open(outfilenewx,"a")
 	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
 	out_file.close()
@@ -251,7 +252,7 @@ def fitmodelold(model, x, y, dy):
     print "E0 [",E0,"(=0.7*omi^210^51 erg)] =", 0.7*popt[2]**2.
     print "------  "
 
-    E0=0.7*popt[2]**2.
+    E051=0.7*popt[2]**2.
 
 #    ym=model(x,popt[0],popt[1],popt[2],popt[3])
     ym=model(x,popt[0],popt[1],popt[2])
@@ -268,7 +269,7 @@ def fitmodelold(model, x, y, dy):
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
 
     #out_file = open(outfileold,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
     #out_file.close()
 
 
@@ -293,7 +294,7 @@ def fitmodelnew(model, x, y, dy):
     print "alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
     print "------  "
 
-    E0=0.7*popt[2]**2.0
+    E051=0.7*popt[2]**2.0
 
 #    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
     ym=model(x,popt[0],popt[1],popt[2],popt[3])
@@ -310,7 +311,7 @@ def fitmodelnew(model, x, y, dy):
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
 
     #out_file = open(outfilenew,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
     #out_file.close()
 
     return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
@@ -332,7 +333,7 @@ def fitmodelnewx(model, x, y, dy):
     print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
     print "alpha (fixed) =", alphax
     print "------  "
-    E0=0.7*popt[2]**2.0
+    E051=0.7*popt[2]**2.
 
     ym=model(x,popt[0],popt[1],popt[2])
     print stats.chisquare(f_obs=y,f_exp=ym)
@@ -347,7 +348,7 @@ def fitmodelnewx(model, x, y, dy):
     bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
 
     #out_file = open(outfilenewx,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E0)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
     #out_file.close()
 
     return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
@@ -392,7 +393,7 @@ dbeta=float(datafiflat[3])
 Tt=float(datafiflat[5])
 
 # luminosity correction from E01,E02 to E1,E2
-K = (E2**(1-beta) - E1**(1-beta))/(E02**(1-beta) - E01**(1-beta))
+K = (E2**(1.-beta+1.e-8) - E1**(1.-beta+1.e-8))/(E02**(1.-beta+1.e-8) - E01**(1.-beta+1.e-8))
 
 logtime=table[:,0]
 dlogtime=table[:,1]
