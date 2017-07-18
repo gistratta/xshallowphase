@@ -1,3 +1,6 @@
+14/7/2017
+Modificato loglum_auto.py (E0 era sbagliata, va fissata ad un valore)
+
 12/7/2017
 Modificata lista LongGRB, tolti:
 100816A
@@ -24,5 +27,12 @@ Cambiati i Tt nel file beta_parameters_and_Tt.dat per:
 130511A 1.5
 140423A 2.
 140509A 2.5
+
+
+— Tempo rest frame in sec
+
+060908 50
+070318 ?
+131117 25
  
 

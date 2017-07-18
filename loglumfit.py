@@ -31,6 +31,8 @@ import os
 plt.clf()
 plt.close()
 
+
+
 """
 1. SET OUTPUT FILES
 """
@@ -44,19 +46,19 @@ outfilenewx=path1+"newmodel_alphafix.txt"
 if not os.path.isfile(outfileold):
 	os.system('touch '+path1+'oldmodel.txt')
 	out_file = open(outfileold,"a")
-	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,omikHz,domikHz,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenew):
 	os.system('touch '+path1+'newmodel.txt')
 	out_file = open(outfilenew,"a")
-	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,alpha,dalpha,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,omikHz,domikHz,alpha,dalpha,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 if not os.path.isfile(outfilenewx):
 	os.system('touch '+path1+'newmodel_alphafix.txt')
 	out_file = open(outfilenewx,"a")
-	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,omikHz,domikHz,chi2,dof,p-val"+"\n")
 	out_file.close()
 
 
@@ -87,8 +89,8 @@ Ine = 0.35*msun*1.4*(r0)**2         # 1.4 10^45 gr cm^2
 
 # --- Initial values of model parameters
 B = 5.0                             # Magnetic field in units of 10^14 Gauss= 1/(gr*cm*s)
-omi = 2*np.pi                       # initial spin frequency 2pi/spini = 6.28 10^3 Hz
-E0=1.                               # Initial total energy (10^51 erg ??)
+omi = 2.0*np.pi                       # initial spin frequency 2pi/spini = 6.28 10^3 Hz
+E0=1.0                               # Initial total energy (10^51 erg ??)
 k=0.4                               # k=4*epsilon_e kind of radiative efficiency
 # ---
 
@@ -175,7 +177,7 @@ def model_old(logt,k,B,omi):
     hg1_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(1/a1))
     hg2_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(t/a1))
 #    f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - Li*hg1_old + Li*t**(1 + k)*hg2_old)
-    f_old=(k/t)*(1/(1 + k))*t**(-k)*(0.7*omi**2 + 0.7*omi**2*k - ((0.7*B**2*omi**4)/(3.799*10**6))*hg1_old + ((0.7*B**2*omi**4)/(3.799*10**6))*t**(1 + k)*hg2_old)
+    f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - ((0.7*B**2*omi**4)/(3.799*10**6))*hg1_old + ((0.7*B**2*omi**4)/(3.799*10**6))*t**(1 + k)*hg2_old)
     return np.log10(f_old)
 
 
@@ -187,13 +189,13 @@ def model_a(logt,k,B,omi,alpha):
         k = radiative efficiency (0.3)
         B = magnetic field (5. in units of 10^14 Gauss)
         omi = initial spin frequency (2pi)
-        [E 0 is fixed and is initial ejecta energy 0.7*omi^2 10^51 erg]
+        [E 0 is fixed to 10^51 erg]
     """
     t=10**logt
 
     hg1_a=scipy.special.hyp2f1((4. - alpha)/(2. -alpha), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2)
     hg2_a=scipy.special.hyp2f1((4. -alpha)/(2. -alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2*t)
-    f_a=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*0.7*omi**2 + 3.6094*10**6*0.7*omi**2*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
+    f_a=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
 
     return np.log10(f_a)
 
@@ -204,154 +206,16 @@ def model_ax(logt,k,B,omi):
         k = radiative efficiency (0.3)
         B = magnetic field (5. in units of 10^14 Gauss)
         omi = initial spin frequency (2pi)
-        [E 0 is fixed and is initial ejecta energy 0.7*omi^2 10^51 erg]
+        [E 0 is fixed to 10^51 erg]
     """
     t=10**logt
     hg1_a=scipy.special.hyp2f1((4. - alphax)/(2. -alphax), 1. + k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2)
     hg2_a=scipy.special.hyp2f1((4. -alphax)/(2. -alphax), 1.+k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2*t)
-    f_ax=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*0.7*omi**2 + 3.6094*10**6*0.7*omi**2*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
+    f_ax=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0 + 3.6094*10**6*E0*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
 
     return np.log10(f_ax)
 
 
-
-"""
-... AND FITTING FUNCTIONS
-"""
-
-
-# FIT MODEL ON DATA
-#http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
-
-# initial model
-#plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
-
-# old model (2011 paper)
-#plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
-
-
-# NOTA: Fissare Tstart significa fissare anche E0
-# E0 puo essere indeterminato se Ein e molto maggiore
-# E0/T0 = lumin. senza magnetar
-# se Lin>>E0/T0 allora E0 non riesce ad essere determinare
-
-# fitta un modello tra i 2 definiti sui dati logaritmici txrt lxrt
-
-def fitmodelold(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0])
-    p0=np.array([k,B,omi])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "E0 [",E0,"(=0.7*omi^210^51 erg)] =", 0.7*popt[2]**2.
-    print "------  "
-
-    E051=0.7*popt[2]**2.
-
-#    ym=model(x,popt[0],popt[1],popt[2],popt[3])
-    ym=model(x,popt[0],popt[1],popt[2])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
-
-    #out_file = open(outfileold,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
-
-
-    return plt.plot(np.log10(t), bfmodel,'r',label='D11 (fit)')
-
-
-
-def fitmodelnew(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0,alpha])
-    p0=np.array([k,B,omi,alpha])
-#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [1.5, 100.,50.0,1.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
-    print "alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "------  "
-
-    E051=0.7*popt[2]**2.0
-
-#    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
-    ym=model(x,popt[0],popt[1],popt[2],popt[3])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
-
-    #out_file = open(outfilenew,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
-
-    return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
-
-
-
-def fitmodelnewx(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0,alpha])
-    p0=np.array([k,B,omi])
-#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-    print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
-    print "alpha (fixed) =", alphax
-    print "------  "
-    E051=0.7*popt[2]**2.
-
-    ym=model(x,popt[0],popt[1],popt[2])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
-
-    #out_file = open(outfilenewx,"a")
-    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    #out_file.close()
-
-    return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
 
 
 """
@@ -448,6 +312,163 @@ startTxrt = float(raw_input(' Start time in sec: '))
 t0=np.logspace(-1.,7., num=100, base=10.0)
 t1=t0[np.where(t0>startTxrt)]
 t=t1[np.where(t1<10**(ltime[-1]))]
+
+
+
+
+"""
+6. DEFINE FITTING FUNCTIONS
+"""
+
+
+# FIT MODEL ON DATA
+#http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
+
+# initial model
+#plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
+
+# old model (2011 paper)
+#plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
+
+
+# NOTA: Fissare Tstart significa fissare anche E0
+# E0 puo essere indeterminato se Ein e molto maggiore
+# E0/T0 = lumin. senza magnetar
+# se Lin>>E0/T0 allora E0 non riesce ad essere determinare
+
+# fitta un modello tra i 2 definiti sui dati logaritmici txrt lxrt
+
+def fitmodelold(model, x, y, dy):
+
+#    p0=np.array([k,B,omi,E0])
+    p0=np.array([k,B,omi])
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.0001,0.0001,0.0001], [2.0, 100.,50.0]))
+    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+
+    Ein = 0.5*Ine*popt[2]**2                            # initial spin energy 27.7 10^51 erg
+    tsdi = 3*Ine*c**3/(popt[1]**2*(r0)**6*popt[2]**2)*10**5   # Initial spin down time for the standard magnetic dipole formula 3.799*10^6/B2*omi**2 s
+    Li=Ein/tsdi
+
+    print "------ "
+    print " k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+    print " B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+    print " omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+    print " Spin Period [ms]=",2.0*np.pi/popt[2], "+/-",2.0*np.pi/popt[2]*(pcov[2,2]**0.5)/popt[2]
+
+    print " E0 fixed [(10^51 erg)] =", E0
+    print " L(Tt)=",model(np.log10(startTxrt),popt[0],popt[1],popt[2])
+    print " E0=(L(Tstart))*Tstart/k=",(10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2])))*startTxrt/popt[0]
+#    print "E0=(L-Lin)Tstart=",
+    print "------  "
+
+    #E051=(Li-10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2])))*startTxrt/popt[0]
+    Pms=2.0*np.pi/popt[2]
+    dPms=Pms*pcov[2,2]**0.5/popt[2]
+    print 'Pms, dPms = ', Pms, dPms
+
+#    ym=model(x,popt[0],popt[1],popt[2],popt[3])
+    ym=model(x,popt[0],popt[1],popt[2])
+    print stats.chisquare(f_obs=y,f_exp=ym)
+    mychi=sum(((y-ym)**2)/dy**2)
+    #mychi=sum(((y-ym)**2)/ym)
+    dof=len(x)-len(popt)
+    print "my chisquare=",mychi
+    print "dof=", dof
+    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+    print "P value",p_value
+
+#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
+    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
+
+    #out_file = open(outfileold,"a")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.close()
+
+
+    return plt.plot(np.log10(t), bfmodel,'r',label='D11 (fit)')
+
+
+
+def fitmodelnew(model, x, y, dy):
+
+#    p0=np.array([k,B,omi,E0,alpha])
+    p0=np.array([k,B,omi,alpha])
+#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.0001,0.0], [2.0, 100.,9.0,1.0]))
+    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+    print "------ "
+    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+    print "E0 [",E0,"(10^51 erg)] =", 1.
+    print "alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+    print "------  "
+
+    E051=1.
+
+#    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
+    ym=model(x,popt[0],popt[1],popt[2],popt[3])
+    print stats.chisquare(f_obs=y,f_exp=ym)
+    mychi=sum(((y-ym)**2)/dy**2)
+    #mychi=sum(((y-ym)**2)/ym)
+    dof=len(x)-len(popt)
+    print "my chisquare=",mychi
+    print "dof=", dof
+    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+    print "P value",p_value
+
+#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
+    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
+
+    #out_file = open(outfilenew,"a")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.close()
+
+    return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
+
+
+
+def fitmodelnewx(model, x, y, dy):
+
+#    p0=np.array([k,B,omi,E0,alpha])
+    p0=np.array([k,B,omi])
+#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
+    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.0001], [2.0, 100.,9.0]))
+    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+    print "------ "
+    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+    print "E0 [",E0,"(10^51 erg)] =", 1.
+    print "alpha (fixed) =", alphax
+    print "------  "
+    E051=1.
+
+    ym=model(x,popt[0],popt[1],popt[2])
+    print stats.chisquare(f_obs=y,f_exp=ym)
+    mychi=sum(((y-ym)**2)/dy**2)
+    #mychi=sum(((y-ym)**2)/ym)
+    dof=len(x)-len(popt)
+    print "my chisquare=",mychi
+    print "dof=", dof
+    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+    print "P value",p_value
+
+    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
+
+    #out_file = open(outfilenewx,"a")
+    #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+    #out_file.close()
+
+    return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
+
+
+
 
 """
 6. PLOT INITIAL MODELS

@@ -31,39 +31,48 @@ import os
 1. SET INPUT and OUTPUT FILES
 """
 
-path1="./output/LGRB_Tt/"
+path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/'
+#path1="./output/LGRB_Tt/"
+path1="./output/LGRB_golden_Tt/"
+
+
+
+#fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
+f=open(path+'Long_GoldenGRB.dat')
+#f=open(path+'LongGRB.dat')
+#f=open(path+'testgrb.dat')
+datagrb=f.read()
+f.close()
 
 # Definisce i file di output
 outfileold=path1+"oldmodel.txt"
 outfilenew=path1+"newmodel.txt"
 outfilenewx=path1+"newmodel_alphafix.txt"
 
+if os.path.isfile(outfileold):
+	os.system('rm '+path1+'oldmodel.txt')
 if not os.path.isfile(outfileold):
 	os.system('touch '+path1+'oldmodel.txt')
 	out_file = open(outfileold,"a")
-	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,Pms,dPms,chi2,dof,p-val"+"\n")
 	out_file.close()
 
+if os.path.isfile(outfilenew):
+	os.system('rm '+path1+'newmodel.txt')
 if not os.path.isfile(outfilenew):
 	os.system('touch '+path1+'newmodel.txt')
 	out_file = open(outfilenew,"a")
-	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,fmHz,dfmHz,alpha,dalpha,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,k,dk,B14,dB14,Pms,dPms,alpha,dalpha,chi2,dof,p-val"+"\n")
 	out_file.close()
 
+if os.path.isfile(outfilenewx):
+	os.system('rm '+path1+'newmodel_alphafix.txt')
 if not os.path.isfile(outfilenewx):
 	os.system('touch '+path1+'newmodel_alphafix.txt')
 	out_file = open(outfilenewx,"a")
-	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,fmHz,dfmHz,chi2,dof,p-val"+"\n")
+	out_file.write("GRB,Tstart,E051,alphax,k,dk,B14,dB14,Pms,dPms,chi2,dof,p-val"+"\n")
 	out_file.close()
 
-
-path = '/Users/giulia/ANALISI/SHALLOWPHASE/DAINOTTI_DALLOSSO/data/TimeLuminosityLC/'
-
-#fi = raw_input(' grb light curve file [e.g. 050603]: ') or "050603"
-
-f=open(path+'LongGRB.dat')
-datagrb=f.read()
-f.close()
 
 
 
@@ -94,8 +103,7 @@ Ine = 0.35*msun*1.4*(r0)**2         # 1.4 10^45 gr cm^2
 
 # --- Initial values of model parameters
 B = 5.0                             # Magnetic field in units of 10^14 Gauss= 1/(gr*cm*s)
-omi = 2*np.pi                       # initial spin frequency 2pi/spini = 6.28 10^3 Hz
-E0=1.                               # Initial total energy (10^51 erg ??)
+omi = 2.0*np.pi                       # initial spin frequency 2pi/spini = 6.28 10^3 Hz
 k=0.4                               # k=4*epsilon_e kind of radiative efficiency
 # ---
 
@@ -121,264 +129,55 @@ alphax=0.1
 
 
 """
- 3. DEFINE MODELS
-
- Simone's NOTE:
-
- spini = initial spin period [in millisecond],
- B = magnetic dipole field [in units of 10^(14)G],
- r0 = typical NS radius [in units of 10 km],
- Ine = moment of inertia of the NS [in units of 10^(45)].
-
- In principle, all of these have values that are not well determined.
- HOWEVER:
- A) r0 and Ine have only minor uncertainties. The NS radius is assumed here to be 12 km, hence the radius is always written as 1.2.
- The coefficient 0.35 in the moment of inertia is somewhat depenedent on the NS EOS.
- Both the coefficient 1.2 and 0.35 can only vary in a restricted range, and are considered as given constants here.
- B) A different argument holds for spini AND B. These are actual free parameters, that should be determined by the fits.
- In this first part I fix their values in order to produce plots of the relevant quantities,
- that will be needed to compare between the "old", magnetic dipole formula,
- and the "new" formula, proposed by Contopoulos Spitkovsky 2006).
- (*ADDITIONAL UNITS: tsdi is in units of seconds; Ein,the initial spin energy, is in units of 10^(51) ergs.)
-
-"""
-# I modelli li devo definire in funzione di logt per poter fare il fit
-
-# --- Useful formula to remind but not used in the code
-#Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)  # pure dipole radiation spin down lum.
-#Lsdold2= Li/(1 + t/a1)**2           # stessa formula di Lsdold1 ma scritta in modo piu semplice
-
-# Initial spin down time for the new formula by C&S06
-#tsdnew= (2./3.)*(3*Ine*c**3*10.**5/(r0**6))/(B**2. * omi**2.)   # tsdnew=(2/3)tsdi
-#tsdnew= 2./3.*3.7991745075226948*10**6./(B**2. * omi**2.)
-#ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha)/(2 - alpha))
-
-# new spin down lum. expression for alpha2
-#ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha2)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha2)/(2 - alpha2))
-# ----
-
-#def model_old(logt,k,B,omi,E0):
-def model_old(logt,k,B,omi):
-    """
-    Description: Energy evolution inside the external shock as due to radiative losses+energy injection
-    (Dall'Osso et al. 2011) assuming pure magnetic dipole, as function of
-        k = radiative efficiency (0.3)
-        B = magnetic field (5. in units of 10^14 Gauss)
-        omi = initial spin frequency (2pi)
-        [E 0 is fixed and is initial ejecta energy 0.7*omi^2 10^51 erg]
-
-    NOTA: nelle funzioni che definiscono i modelli, tutti i parametri liberi vanno espressi esplicitamente
-
-    Usage: model_old()
-    """
-    t=10**logt
-
-    # a1=tsdi
-    a1=(3.799*10**6)/(B**2*omi**2)
-
-    # Li=Ein/tsdi  Initial spindown lum. (?) 0.007 10^51 erg/s
-    # Ein=0.5*Ine*omi**2 = 0.7*omi**2   #10^51 erg
-    Li=(0.7*B**2*omi**4)/(3.799*10**6)
-
-    hg1_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(1/a1))
-    hg2_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(t/a1))
-#    f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - Li*hg1_old + Li*t**(1 + k)*hg2_old)
-    f_old=(k/t)*(1/(1 + k))*t**(-k)*(0.7*omi**2 + 0.7*omi**2*k - ((0.7*B**2*omi**4)/(3.799*10**6))*hg1_old + ((0.7*B**2*omi**4)/(3.799*10**6))*t**(1 + k)*hg2_old)
-    return np.log10(f_old)
-
-
-
-#def model_a(logt,k,B,omi,E0,alpha):
-def model_a(logt,k,B,omi,alpha):
-    """
-    Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha05=0.5, as function of
-        k = radiative efficiency (0.3)
-        B = magnetic field (5. in units of 10^14 Gauss)
-        omi = initial spin frequency (2pi)
-        [E 0 is fixed and is initial ejecta energy 0.7*omi^2 10^51 erg]
-    """
-    t=10**logt
-
-    hg1_a=scipy.special.hyp2f1((4. - alpha)/(2. -alpha), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2)
-    hg2_a=scipy.special.hyp2f1((4. -alpha)/(2. -alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2*t)
-    f_a=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*0.7*omi**2 + 3.6094*10**6*0.7*omi**2*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
-
-    return np.log10(f_a)
-
-
-def model_ax(logt,k,B,omi):
-    """
-    Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alphax, as function of
-        k = radiative efficiency (0.3)
-        B = magnetic field (5. in units of 10^14 Gauss)
-        omi = initial spin frequency (2pi)
-        [E 0 is fixed and is initial ejecta energy 0.7*omi^2 10^51 erg]
-    """
-    t=10**logt
-    hg1_a=scipy.special.hyp2f1((4. - alphax)/(2. -alphax), 1. + k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2)
-    hg2_a=scipy.special.hyp2f1((4. -alphax)/(2. -alphax), 1.+k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2*t)
-    f_ax=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*0.7*omi**2 + 3.6094*10**6*0.7*omi**2*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
-
-    return np.log10(f_ax)
-
-
-
-"""
-... AND FITTING FUNCTIONS
-"""
-
-
-# FIT MODEL ON DATA
-#http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
-
-# initial model
-#plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
-
-# old model (2011 paper)
-#plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
-
-
-# NOTA: Fissare Tstart significa fissare anche E0
-# E0 puo essere indeterminato se Ein e molto maggiore
-# E0/T0 = lumin. senza magnetar
-# se Lin>>E0/T0 allora E0 non riesce ad essere determinare
-
-# fitta un modello tra i 2 definiti sui dati logaritmici txrt lxrt
-
-def fitmodelold(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0])
-    p0=np.array([k,B,omi])
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "E0 [",E0,"(=0.7*omi^210^51 erg)] =", 0.7*popt[2]**2.
-    print "------  "
-    E051=0.7*popt[2]**2.
-
-#    ym=model(x,popt[0],popt[1],popt[2],popt[3])
-    ym=model(x,popt[0],popt[1],popt[2])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
-
-    out_file = open(outfileold,"a")
-    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    out_file.close()
-
-
-    return plt.plot(np.log10(t), bfmodel,'r',label='D11 (fit)')
-
-
-
-def fitmodelnew(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0,alpha])
-    p0=np.array([k,B,omi,alpha])
-#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.0], [1.5, 100.,50.0,1.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-#    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
-    print "alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
-    print "------  "
-    E051=0.7*popt[2]**2.
-#    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
-    ym=model(x,popt[0],popt[1],popt[2],popt[3])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-#    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
-
-    out_file = open(outfilenew,"a")
-    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    out_file.close()
-
-    return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
-
-
-
-def fitmodelnewx(model, x, y, dy):
-
-#    p0=np.array([k,B,omi,E0,alpha])
-    p0=np.array([k,B,omi])
-#    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
-    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001], [1.5, 100.,50.0]))
-    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
-    #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
-    print "------ "
-    print "k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
-    print "B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
-    print "omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
-    print "E0 [",E0,"0.7*0.i^2(10^51 erg)] =", 0.7*popt[2]**2.0
-    print "alpha (fixed) =", alphax
-    print "------  "
-    E051=0.7*popt[2]**2.
-
-    ym=model(x,popt[0],popt[1],popt[2])
-    print stats.chisquare(f_obs=y,f_exp=ym)
-    mychi=sum(((y-ym)**2)/dy**2)
-    #mychi=sum(((y-ym)**2)/ym)
-    dof=len(x)-len(popt)
-    print "my chisquare=",mychi
-    print "dof=", dof
-    p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
-    print "P value",p_value
-
-    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
-
-    out_file = open(outfilenewx,"a")
-    out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
-    out_file.close()
-
-    return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
-
-
-"""
  4. READ DATA
 """
 
-
 listgrb=datagrb.split()
-
 for fi in listgrb:
 
+    # --- Legge le curve di luce nella dir TimeLuminosityLC
     filename=path+fi+'TimeLuminosityLC.txt'
     data=pd.read_csv(filename,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
-
     # trasforma i dati in un ndarray
     data_array=data.values
-
     # elimina le righe con NAN alla prima colonna
     table=data_array[np.logical_not(np.isnan(data_array[:,0])),:]
 
-    # --- Calcola il fattore correttivo per portare la lum in banda 1-10000 keV
+    # --- legge l'energia E0
+#    """
+    fileinE0old=path1+'oldmodel_E0.txt'
+    dataE0old=pd.read_csv(fileinE0old,comment='!', sep=',', header=None,skiprows=None,skip_blank_lines=True)
+    dataE0old_array=dataE0old.values
+    print "Index for ",fi," : ", np.where(dataE0old_array==fi)
+    datafi0old=dataE0old_array[np.where(dataE0old_array[:,0]==fi)]
+    datafi0oldflat=datafi0old.flatten()
+    E0old=float(datafi0oldflat[2])
+    print "E0old=",E0old
 
+    fileinE0new=path1+'newmodel_E0.txt'
+    dataE0new=pd.read_csv(fileinE0new,comment='!', sep=',', header=None,skiprows=None,skip_blank_lines=True)
+    dataE0new_array=dataE0new.values
+    print "Index for ",fi," : ", np.where(dataE0new_array==fi)
+    datafi0new=dataE0new_array[np.where(dataE0new_array[:,0]==fi)]
+    datafi0newflat=datafi0new.flatten()
+    E0new=float(datafi0newflat[2])
+    print "E0new=",E0new
+
+    fileinE0newa=path1+'newmodel_alphafix_E0.txt'
+    dataE0newa=pd.read_csv(fileinE0newa,comment='!', sep=',', header=None,skiprows=None,skip_blank_lines=True)
+    dataE0newa_array=dataE0newa.values
+    print "Index for ",fi," : ", np.where(dataE0newa_array==fi)
+    datafi0newa=dataE0newa_array[np.where(dataE0newa_array[:,0]==fi)]
+    datafi0newaflat=datafi0newa.flatten()
+    E0newa=float(datafi0newaflat[2])
+    print "E0newa=",E0newa
+
+
+#    """
+#    E0=1.                               # Initial total energy (10^51 erg ??)
+
+
+    # --- Calcola il fattore correttivo per portare la lum in banda 1-10000 keV
     # Read beta and Tstart from file
     filein=path+'beta_parameters_and_Tt.dat'
     dataparam=pd.read_csv(filein,comment='!', sep='\t', header=None,skiprows=None,skip_blank_lines=True)
@@ -390,25 +189,19 @@ for fi in listgrb:
     beta=float(datafiflat[2])
     dbeta=float(datafiflat[3])
     Tt=float(datafiflat[5])
-
     # luminosity correction from E01,E02 to E1,E2
-    K = (E2**(1.-beta+1.e-8) - E1**(1.-beta+1.e-8))/(E02**(1.-beta+1.e-8) - E01**(1.-beta+1.e-8))
-
+    Kcorr = (E2**(1.-beta+1.e-8) - E1**(1.-beta+1.e-8))/(E02**(1.-beta+1.e-8) - E01**(1.-beta+1.e-8))
     logtime=table[:,0]
     dlogtime=table[:,1]
-    loglum=table[:,2]-51+np.log10(K)
+    loglum=table[:,2]-51+np.log10(Kcorr)
     dloglum=table[:,3]
-
     # sort times and riassess lum vector
     index=np.argsort(logtime)
     ltime=logtime[index]
     llum=loglum[index]
     dllum=dloglum[index]
-    # -----
 
-    """
-    5. PLOT DATA POINT
-    """
+    # --- Plot data points
     En1=str(E1)
     En2=str(E2)
     plt.title('GRB'+fi+' ['+En1+'-'+En2+' keV]')
@@ -423,14 +216,13 @@ for fi in listgrb:
 
     # Se uso il Notebook
     #%matplotlib inline
-
     #plt.loglog(time,lum,'.')
     #plt.xlabel('time from trigger [s]')
     #plt.ylabel('Luminosity x 10^51 [erg cm^-2 s^-1]')
     #plt.ylabel('0.3-10 keV flux [erg cm^-2 s^-1]')
     #plt.show()
 
-    # Read and printout the start time of the plateau from the param_ file as logT in obs. frame
+    # --- Read and printout the start time of the plateau from the param_ file as logT in obs. frame
     if Tt > 0.0 :
         startTxrtFromFile=(10**Tt)/(1+z)
     if Tt == 0.0 :
@@ -438,15 +230,276 @@ for fi in listgrb:
     print("Start time in sec from file:", startTxrtFromFile)
 
     # If the read start time is ok, just retype it, otherwise type the right start time
-
     #startTxrt = float(raw_input(' Start time in sec: '))
     startTxrt = float(startTxrtFromFile)
 
     # Create a time vector with which plot the model
     #t0=np.linspace(100.0,1.0e6,10000)
-    t0=np.logspace(1.,7., num=100, base=10.0)
+    t0=np.logspace(-1.,7., num=100, base=10.0)
     t1=t0[np.where(t0>startTxrt)]
     t=t1[np.where(t1<10**(ltime[-1]))]
+
+
+
+    """
+     DEFINE MODELS
+
+     Simone's NOTE:
+
+     spini = initial spin period [in millisecond],
+     B = magnetic dipole field [in units of 10^(14)G],
+     r0 = typical NS radius [in units of 10 km],
+     Ine = moment of inertia of the NS [in units of 10^(45)].
+
+     In principle, all of these have values that are not well determined.
+     HOWEVER:
+     A) r0 and Ine have only minor uncertainties. The NS radius is assumed here to be 12 km, hence the radius is always written as 1.2.
+     The coefficient 0.35 in the moment of inertia is somewhat depenedent on the NS EOS.
+     Both the coefficient 1.2 and 0.35 can only vary in a restricted range, and are considered as given constants here.
+     B) A different argument holds for spini AND B. These are actual free parameters, that should be determined by the fits.
+     In this first part I fix their values in order to produce plots of the relevant quantities,
+     that will be needed to compare between the "old", magnetic dipole formula,
+     and the "new" formula, proposed by Contopoulos Spitkovsky 2006).
+     (*ADDITIONAL UNITS: tsdi is in units of seconds; Ein,the initial spin energy, is in units of 10^(51) ergs.)
+
+    """
+    # I modelli li devo definire in funzione di logt per poter fare il fit
+
+    # --- Useful formula to remind but not used in the code
+    #Lsdold1=Ein/(tsdi*(1 + t/tsdi)**2)  # pure dipole radiation spin down lum.
+    #Lsdold2= Li/(1 + t/a1)**2           # stessa formula di Lsdold1 ma scritta in modo piu semplice
+
+    # Initial spin down time for the new formula by C&S06
+    #tsdnew= (2./3.)*(3*Ine*c**3*10.**5/(r0**6))/(B**2. * omi**2.)   # tsdnew=(2/3)tsdi
+    #tsdnew= 2./3.*3.7991745075226948*10**6./(B**2. * omi**2.)
+    #ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha)/(2 - alpha))
+
+    # new spin down lum. expression for alpha2
+    #ls=r0**6/(4*c**3*10**5)*B**2*omi**4/(1 + (2 - alpha2)/4*r0**6/(Ine*c**3*10**5)*B**2*omi**2*t)**((4 - alpha2)/(2 - alpha2))
+    # ----
+
+    #def model_old(logt,k,B,omi,E0):
+    def model_old(logt,k,B,omi):
+        """
+        Description: Energy evolution inside the external shock as due to radiative losses+energy injection
+        (Dall'Osso et al. 2011) assuming pure magnetic dipole, as function of
+            k = radiative efficiency (0.3)
+            B = magnetic field (5. in units of 10^14 Gauss)
+            omi = initial spin frequency (2pi)
+            [E 0 is fixed to 10^51 erg]
+
+        NOTA: nelle funzioni che definiscono i modelli, tutti i parametri liberi vanno espressi esplicitamente
+
+        Usage: model_old()
+        """
+        t=10**logt
+
+        # a1=tsdi
+        a1=(3.799*10**6)/(B**2*omi**2)
+
+        # Li=Ein/tsdi  Initial spindown lum. (?) 0.007 10^51 erg/s
+        # Ein=0.5*Ine*omi**2 = 0.7*omi**2   #10^51 erg
+        #Li=(0.7*B**2*omi**4)/(3.799*10**6)
+        hg1_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(1/a1))
+        hg2_old=scipy.special.hyp2f1(2, 1 + k, 2 + k, -(t/a1))
+    #    f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0 + E0*k - Li*hg1_old + Li*t**(1 + k)*hg2_old)
+        f_old=(k/t)*(1/(1 + k))*t**(-k)*(E0old + E0old*k - ((0.7*B**2*omi**4)/(3.799*10**6))*hg1_old + ((0.7*B**2*omi**4)/(3.799*10**6))*t**(1 + k)*hg2_old)
+        return np.log10(f_old)
+
+
+
+    #def model_a(logt,k,B,omi,E0,alpha):
+    def model_a(logt,k,B,omi,alpha):
+        """
+        Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alpha05=0.5, as function of
+            k = radiative efficiency (0.3)
+            B = magnetic field (5. in units of 10^14 Gauss)
+            omi = initial spin frequency (2pi)
+            [E 0 is fixed to 10^51 erg]
+        """
+        t=10**logt
+        hg1_a=scipy.special.hyp2f1((4. - alpha)/(2. -alpha), 1. + k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2)
+        hg2_a=scipy.special.hyp2f1((4. -alpha)/(2. -alpha), 1.+k, 2.+k, 1.97411*10**(-7)*(alpha-2.)*B**2*omi**2*t)
+        f_a=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0new + 3.6094*10**6*E0new*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
+
+        return np.log10(f_a)
+
+
+    def model_ax(logt,k,B,omi):
+        """
+        Description: Energy evolution inside the external shock as due to radiative losses+energy injection introducing the Contopoulos and Spitkovsky 2006 formula assuming alphax, as function of
+            k = radiative efficiency (0.3)
+            B = magnetic field (5. in units of 10^14 Gauss)
+            omi = initial spin frequency (2pi)
+            [E 0 is fixed to 10^51 erg]
+        """
+        t=10**logt
+        hg1_a=scipy.special.hyp2f1((4. - alphax)/(2. -alphax), 1. + k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2)
+        hg2_a=scipy.special.hyp2f1((4. -alphax)/(2. -alphax), 1.+k, 2.+k, 1.97411*10**(-7)*(alphax-2.)*B**2*omi**2*t)
+        f_ax=(k/t)*(1/(1 + k))*((r0**6)/(4.*c**3.*10**5))*(t**(-k))*(3.6094*10**6*E0newa + 3.6094*10**6*E0newa*k - B**2*omi**4*hg1_a + B**2*omi**4*t**(1 + k)*hg2_a)
+
+        return np.log10(f_ax)
+
+
+
+    """
+    Define FITTING FUNCTIONS
+    """
+
+
+    # FIT MODEL ON DATA
+    #http://www2.mpia-hd.mpg.de/~robitaille/PY4SCI_SS_2014/_static/15.%20Fitting%20models%20to%20data.html
+
+    # initial model
+    #plt.loglog(txrt, model_a05(txrt,k,B,omi,E0),'k--',label='start model')
+
+    # old model (2011 paper)
+    #plt.loglog(t, model_old(t,0.66,12.2,2*np.pi/1.18,1.04),'k--',label='start model')
+
+    # NOTA: Fissare Tstart significa fissare anche E0
+    # E0 puo essere indeterminato se Ein e molto maggiore
+    # E0/T0 = lumin. senza magnetar
+    # se Lin>>E0/T0 allora E0 non riesce ad essere determinare
+
+    # fitta un modello tra i 2 definiti sui dati logaritmici txrt lxrt
+
+    def fitmodelold(model, x, y, dy):
+
+    #    p0=np.array([k,B,omi,E0])
+        p0=np.array([k,B,omi])
+        popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.0001,0.0001,0.0001], [2.0, 100.,10.0]))
+        #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+        #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+
+        #Ein = 0.5*Ine*popt[2]**2                            # initial spin energy 27.7 10^51 erg
+        #tsdi = 3*Ine*c**3/(popt[1]**2*(r0)**6*popt[2]**2)*10**5   # Initial spin down time for the standard magnetic dipole formula 3.799*10^6/B2*omi**2 s
+        #Li=Ein/tsdi
+
+        print "------ "
+        print " k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+        print " B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+        print " omi [2pi/spin_i=",omi,"(kHz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+        print " Spin Period [ms]=",2.0*np.pi/popt[2], "+/-",2.0*np.pi/popt[2]*(pcov[2,2]**0.5)/popt[2]
+
+    #    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+        print " E0 (fixed) [10^51 erg) =", E0old
+        print " L(Tt)=",model(np.log10(startTxrt),popt[0],popt[1],popt[2])
+        print " E051=(L(Ttstart))*Tstart/k=",10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2]))*startTxrt/popt[0]
+        print "------  "
+
+        E051=(10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2])))*startTxrt/popt[0]
+        Pms=2.0*np.pi/popt[2]
+        dPms=Pms*(pcov[2,2]**0.5)/popt[2]
+        print 'Pms, dPms=', Pms, dPms
+
+    #    ym=model(x,popt[0],popt[1],popt[2],popt[3])
+        ym=model(x,popt[0],popt[1],popt[2])
+        print stats.chisquare(f_obs=y,f_exp=ym)
+        mychi=sum(((y-ym)**2)/dy**2)
+        #mychi=sum(((y-ym)**2)/ym)
+        dof=len(x)-len(popt)
+        print "my chisquare=",mychi
+        print "dof=", dof
+        p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+        print "P value",p_value
+
+        bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
+
+        out_file = open(outfileold,"a")
+        #out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+        out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %Pms)+","+str("%.5f" %dPms)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+        out_file.close()
+
+        return plt.plot(np.log10(t), bfmodel,'r',label='D11 (fit)')
+
+
+
+    def fitmodelnew(model, x, y, dy):
+
+    #    p0=np.array([k,B,omi,E0,alpha])
+        p0=np.array([k,B,omi,alpha])
+    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
+        popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.0001,0.0], [2.0, 100.,9.0,1.0]))
+        #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+        #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+        print "------ "
+        print " k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+        print " B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+        print " omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+        print " Spin Period [ms]=",2.0*np.pi/popt[2], "+/-",2.0*np.pi/popt[2]*(pcov[2,2]**0.5)/popt[2]
+    #    print "E0 [",E0,"(10^51 erg)] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+        print " E0 [(fixed 10^51 erg)] =", E0new
+        print " alpha [",alpha,"] =", "%.5f" %popt[3], "+/-", "%.5f" %pcov[3,3]**0.5
+        print " E051=(L(Ttstart))*Tstart/k=",10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2],popt[3]))*startTxrt/popt[0]
+        print "------  "
+
+        E051=(10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2],popt[3])))*startTxrt/popt[0]
+        Pms=2.0*np.pi/popt[2]
+        dPms=Pms*(pcov[2,2]**0.5)/popt[2]
+
+    #    ym=model(x,popt[0],popt[1],popt[2],popt[3],popt[4])
+        ym=model(x,popt[0],popt[1],popt[2],popt[3])
+        print stats.chisquare(f_obs=y,f_exp=ym)
+        mychi=sum(((y-ym)**2)/dy**2)
+        #mychi=sum(((y-ym)**2)/ym)
+        dof=len(x)-len(popt)
+        print "my chisquare=",mychi
+        print "dof=", dof
+        p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+        print "P value",p_value
+
+    #    bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3],popt[4])
+        bfmodel=model(np.log10(t),popt[0],popt[1],popt[2],popt[3])
+
+        out_file = open(outfilenew,"a")
+#        out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %popt[2])+","+str("%.5f" %pcov[2,2]**0.5)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+        out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %Pms)+","+str("%.5f" %dPms)+","+str("%.5f" %popt[3])+","+str("%.5f" %pcov[3,3]**0.5)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+        out_file.close()
+
+        return plt.plot(np.log10(t), bfmodel,'b',label='CS06 (fit)')
+
+
+
+    def fitmodelnewx(model, x, y, dy):
+
+    #    p0=np.array([k,B,omi,E0,alpha])
+        p0=np.array([k,B,omi])
+    #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.001,0.00001,0.0], [4.0, 100.,50.0,100.0,1.0]))
+        popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=([0.001,0.0001,0.0001], [2.0, 100.,9.0]))
+        #    popt, pcov = curve_fit(model, x, y, p0, sigma=dy, bounds=(0., [1.8, 10.,10.,100.]))
+        #popt, pcov = curve_fit(model, x, y, p0, sigma=dy)
+        print "------ "
+        print " k [",k,"] =", "%.5f" %popt[0], "+/-", "%.5f" %pcov[0,0]**0.5
+        print " B [",B,"(10^14 G)]  =", "%.5f" %popt[1], "+/-", "%.5f" %pcov[1,1]**0.5
+        print " omi [2pi/spin_i=",omi,"(10^3 Hz)] =", "%.5f" %popt[2], "+/-", "%.5f" %pcov[2,2]**0.5
+        print " Spin Period [ms]=",2.0*np.pi/popt[2], "+/-",2.0*np.pi/popt[2]*(pcov[2,2]**0.5)/popt[2]
+        print " E0 [fixed (10^51 erg)] =", E0newa
+        print " alpha (fixed) =", alphax
+        print " E051=(L(Ttstart))*Tstart/k=",10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2]))*startTxrt/popt[0]
+        print "------  "
+
+        E051=10**(model(np.log10(startTxrt),popt[0],popt[1],popt[2]))*startTxrt/popt[0]
+        Pms=2.0*np.pi/popt[2]
+        dPms=Pms*(pcov[2,2]**0.5)/popt[2]
+
+        ym=model(x,popt[0],popt[1],popt[2])
+        print stats.chisquare(f_obs=y,f_exp=ym)
+        mychi=sum(((y-ym)**2)/dy**2)
+        #mychi=sum(((y-ym)**2)/ym)
+        dof=len(x)-len(popt)
+        print "my chisquare=",mychi
+        print "dof=", dof
+        p_value = 1-stats.chi2.cdf(x=mychi,df=dof)
+        print "P value",p_value
+
+        bfmodel=model(np.log10(t),popt[0],popt[1],popt[2])
+
+        out_file = open(outfilenewx,"a")
+        out_file.write(fi+","+str(startTxrt)+","+str(E051)+","+str(alphax)+","+str("%.5f" %popt[0])+","+str("%.5f" %pcov[0,0]**0.5)+","+str("%.5f" %popt[1])+","+str("%.5f" %pcov[1,1]**0.5)+","+str("%.5f" %Pms)+","+str("%.5f" %dPms)+","+str("%.5f" %mychi)+","+str("%.5f" %dof)+","+str("%.5f" %p_value)+"\n")
+        out_file.close()
+
+        return plt.plot(np.log10(t), bfmodel,'c',label='CS06 alpha = 0.1 (fit)')
+
 
     """
     6. PLOT INITIAL MODELS
@@ -478,11 +531,16 @@ for fi in listgrb:
     print 'model_a with alpha fixed'
     fitmodelnewx(model_ax,txrt,lxrt,dlxrt)
 
+
 # --- Salva il plot nella directory output
 
     plt.legend()
     plt.show()
-    plt.savefig(path1+fi+'.png')
+
+    if os.path.isfile(path1+fi+'.png'):
+    	os.system('rm '+path1+fi+'.png')
+    if not os.path.isfile(path1+fi+'.png'):
+        plt.savefig(path1+fi+'.png')
 
     # pulisce i plot e resetta
     plt.clf()
